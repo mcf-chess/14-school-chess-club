@@ -15,6 +15,6 @@
   харуулж, админ хуудас тохиргоо хийгээгүйг мэдэгдэнэ.
 */
 const BACKEND_CONFIG = {
-  url: '', // Жишээ: 'https://abcdefghijklmnop.supabase.co'
-  anonKey: '', // «anon public» эсвэл «publishable» түлхүүр
+  url: 'https://pmsgabykmqcrdnutcqgl.supabase.co', // Жишээ: 'https://abcdefghijklmnop.supabase.co'
+  anonKey: 'sb_publishable_MLUf2vSMDtQF1aUgfSXdkQ_Oy9NBq8a', // «anon public» эсвэл «publishable» түлхүүр
 };
