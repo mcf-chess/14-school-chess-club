@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="mn">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#244de9" />
+    <title>14 дүгээр сургуулийн шатрын клуб | Анхны нүүдлээс зөв дадал руу</title>
+    <meta
+      name="description"
+      content="14 дүгээр сургуулийн шатрын клуб. Анхан шатнаас тэмцээний бэлтгэл хүртэлх сургалт. Бямба, Ням гарагт гурван ээлжээр хичээллэнэ."
+    />
+    <link rel="icon" type="image/svg+xml" href="assets/club-logo.svg" />
+
+    <!-- Загвар -->
+    <link rel="stylesheet" href="css/style.css" />
+
+    <!-- Өнгөний горимыг хуудас зурагдахаас өмнө тохируулна -->
+    <script src="js/theme.js"></script>
+
+    <!-- Хуудасны үйлдлүүд -->
+    <script src="js/site-config.js" defer></script>
+    <script src="js/common.js" defer></script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Үндсэн агуулга руу шилжих</a>
+
+    <!-- Сургуулийн мөр ба толгой хэсэг (бүх хуудсанд ижил) -->
+    <div class="school-bar">
+      <div class="container">
+        <span>НИЙСЛЭЛИЙН ЕРӨНХИЙ БОЛОВСРОЛЫН 14 ДҮГЭЭР СУРГУУЛЬ</span>
+        <a href="https://14school.mn/" target="_blank" rel="noopener" data-club-href="schoolUrl">
+          Сургуулийн цахим хуудас ↗
+        </a>
+      </div>
+    </div>
+    <header class="header">
+      <div class="container header-inner">
+        <a class="brand" href="index.html" aria-label="Шатрын клуб — Нүүр хуудас">
+          <img src="assets/club-logo.svg" width="56" height="56" alt="" />
+          <span>
+            ШАТРЫН КЛУБ
+            <small>Мэдлэг. Хөдөлмөр. Дэвшил.</small>
+          </span>
+        </a>
+        <button
+          id="menu"
+          class="menu"
+          type="button"
+          aria-expanded="false"
+          aria-controls="nav"
+          aria-label="Үндсэн цэс нээх"
+        >
+          <span aria-hidden="true">☰</span>
+        </button>
+        <nav id="nav" aria-label="Үндсэн цэс">
+          <a href="index.html" aria-current="page">Нүүр</a>
+          <a href="training.html">Сургалт</a>
+          <a href="coaches.html">Багш нар</a>
+          <a href="athletes.html">Тамирчид</a>
+          <a href="contact.html">Холбоо барих</a>
+        </nav>
+        <div class="header-tools">
+          <button
+            class="theme-toggle"
+            type="button"
+            aria-label="Харанхуй горимд шилжих"
+            aria-pressed="false"
+          >
+            <span aria-hidden="true">☾</span>
+          </button>
+        </div>
+      </div>
+    </header>
+    <main id="main" tabindex="-1">
+      <!-- Нүүр хэсэг -->
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="container hero-content">
+          <div class="hero-copy">
+            <p class="eyebrow">
+              <span class="dot"></span>
+              14 ДҮГЭЭР СУРГУУЛИЙН ШАТРЫН КЛУБ
+            </p>
+            <h1 id="hero-title">
+              Их аялал
+              <br />
+              анхны
+              <span>нүүдлээс.</span>
+            </h1>
+            <p class="hero-lead">
+              Бодож сурах. Өөртөө итгэх. Хамтдаа хөгжих.
+              <br />
+              Хүүхдийн сонирхлыг дэмжсэн шатрын сургалт — анхны нүүдлээс тэмцээний бэлтгэл хүртэл.
+            </p>
+            <div class="actions">
+              <a href="training.html#program" class="button gold">
+                Сургалттай танилцах
+                <span>↗</span>
+              </a>
+              <a href="contact.html" class="hero-link">Багштай холбогдох ↗</a>
+            </div>
+            <div class="hero-note">
+              <span aria-hidden="true">♙</span>
+              <p>
+                Шатар мэдэхгүй байсан ч болно.
+                <br />
+                <strong>Хамтдаа анхны нүүдлээс эхэлнэ.</strong>
+              </p>
+            </div>
+          </div>
+          <figure class="hero-visual">
+            <img
+              class="hero-photo"
+              src="assets/chess-hero-v2.jpg"
+              alt="Цэнхэр, цагаан хөлөг дээрх морь, ноён, тэрэг болон хүү"
+              fetchpriority="high"
+            />
+            <div class="visual-top" aria-hidden="true">
+              <span>14 / CHESS CLUB</span>
+              <span>Улаанбаатар</span>
+            </div>
+            <figcaption class="visual-caption">
+              <span>
+                64 нүд.
+                <br />
+                Тоолж баршгүй боломж.
+              </span>
+              <small>МЭДЛЭГ · ХӨДӨЛМӨР · ДЭВШИЛ</small>
+            </figcaption>
+          </figure>
+          <div class="hero-courses">
+            <a class="hero-course" href="training.html#level-beginner">
+              <div>
+                <strong>Анхан шат</strong>
+                <small>Анхны нүүдлээс зөв суурь руу</small>
+              </div>
+              <span aria-hidden="true">♙</span>
+            </a>
+            <a class="hero-course" href="training.html#level-foundation">
+              <div>
+                <strong>Суурь бататгах</strong>
+                <small>Тактик, тооцоолол, төлөвлөгөө</small>
+              </div>
+              <span aria-hidden="true">♜</span>
+            </a>
+            <a class="hero-course" href="training.html#level-competition">
+              <div>
+                <strong>Тэмцээний бэлтгэл</strong>
+                <small>Зорилготой бэлтгэл, өргийн шинжилгээ</small>
+              </div>
+              <span aria-hidden="true">♞</span>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- Товч мэдээллийн мөр -->
+      <div class="quick-info">
+        <div class="container quick-grid">
+          <div>
+            <span class="quick-icon">◷</span>
+            <p>
+              <small>ХИЧЭЭЛЛЭХ ӨДӨР</small>
+              <strong>Бямба · Ням</strong>
+            </p>
+          </div>
+          <div>
+            <span class="quick-icon">⌖</span>
+            <p>
+              <small>СУРГАЛТЫН БАЙРШИЛ</small>
+              <strong>14 дүгээр сургууль</strong>
+            </p>
+          </div>
+          <div>
+            <span class="quick-icon">♙</span>
+            <p>
+              <small>ХАМРАХ ХҮРЭЭ</small>
+              <strong>Бүх хүүхдэд нээлттэй</strong>
+            </p>
+          </div>
+          <a href="tel:+97680344372" data-club-href="phone">
+            <span class="quick-icon">↗</span>
+            <p>
+              <small>СУРГАЛТЫН ЛАВЛАХ</small>
+              <strong><span data-club="phone">8034-4372</span></strong>
+            </p>
+          </a>
+        </div>
+      </div>
+
+      <!-- Шатрын ач тус -->
+      <section id="benefits" class="section container">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">ХҮҮХДИЙН ХӨГЖИЛ</p>
+            <h2>
+              Хөлгөөс эхэлж,
+              <br />
+              <span>амьдралд хэрэгжинэ.</span>
+            </h2>
+          </div>
+          <p class="section-intro">
+            Хөлгийн ард хүүхэд ажиглаж, бодож, шийдэж сурна. Шатрын тоглолт эдгээр чадварыг тогтмол
+            дадлагажуулах сонирхолтой орчин болдог.
+          </p>
+        </div>
+        <div class="benefits-grid">
+          <article>
+            <span class="benefit-icon" aria-hidden="true">
+              <img src="assets/pieces/blueR.svg" width="80" height="80" alt="" loading="lazy" />
+            </span>
+            <h3>Анхаарал төвлөрөл</h3>
+            <p>
+              Байрлалаа ажиглаж, өрсөлдөгчийн заналхийллийг анзаарч, эхэлсэн бодлогоо дуустал
+              ажиллах дадал.
+            </p>
+          </article>
+          <article>
+            <span class="benefit-icon" aria-hidden="true">
+              <img src="assets/pieces/blueN.svg" width="80" height="80" alt="" loading="lazy" />
+            </span>
+            <h3>Логик ба тооцоолол</h3>
+            <p>
+              «Ингэж нүүвэл юу болох вэ?» Хэд хэдэн хувилбарыг харьцуулж, учир шалтгааныг нь
+              тайлбарлах дасгал.
+            </p>
+          </article>
+          <article>
+            <span class="benefit-icon" aria-hidden="true">
+              <img src="assets/pieces/blueQ.svg" width="80" height="80" alt="" loading="lazy" />
+            </span>
+            <h3>Шийдвэр гаргалт</h3>
+            <p>
+              Боломжит нүүдлүүдээс сонголт хийж, цагтаа багтаан шийдэх, шийдвэрийнхээ үр дүнг ойлгох
+              дадал.
+            </p>
+          </article>
+          <article>
+            <span class="benefit-icon" aria-hidden="true">
+              <img src="assets/pieces/blueP.svg" width="80" height="80" alt="" loading="lazy" />
+            </span>
+            <h3>Тэвчээр ба тууштай байдал</h3>
+            <p>
+              Хэцүү бодлогод дахин оролдох, алдаагаа хүлээн зөвшөөрөх, дараагийн өрөгтөө анхаарлаа
+              хандуулах боломж.
+            </p>
+          </article>
+          <article>
+            <span class="benefit-icon" aria-hidden="true">
+              <img src="assets/pieces/blueK.svg" width="80" height="80" alt="" loading="lazy" />
+            </span>
+            <h3>Хүндлэл ба харилцаа</h3>
+            <p>
+              Өрсөлдөгчөө хүндэтгэх, дүрмээ дагах, хожил ба хожигдлыг зөв хүлээн авах спортын соёл.
+            </p>
+          </article>
+          <article>
+            <span class="benefit-icon" aria-hidden="true">
+              <img src="assets/pieces/blueQ.svg" width="80" height="80" alt="" loading="lazy" />
+            </span>
+            <h3>Өөртөө итгэх итгэл</h3>
+            <p>
+              Бодлогоо бие даан шийдэж, сурсан зүйлээ тоглолтод ашиглах бүрдээ өөрийн ахицыг
+              мэдэрнэ.
+            </p>
+          </article>
+        </div>
+        <div class="benefit-note">
+          <strong>Найз нөхөдтэйгөө өнгөрүүлэх үнэ цэнтэй цаг.</strong>
+          <p>Хүүхэд хөлөг дээр нүүр тулан тоглож, санаагаа ярилцаж, хамтдаа суралцана.</p>
+        </div>
+      </section>
+
+      <!-- Бусад хуудас руу чиглүүлэх -->
+      <section class="section container" aria-labelledby="explore-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">КЛУБТАЙ ТАНИЛЦАХ</p>
+            <h2 id="explore-title">
+              Хэрэгтэй мэдээллээ
+              <br />
+              <span>эндээс олоорой.</span>
+            </h2>
+          </div>
+          <p class="section-intro">
+            Сургалтын түвшин, хуваарь, төлбөр, багш нар болон элсэх алхмуудыг тус тусын хуудаснаас
+            үзнэ үү.
+          </p>
+        </div>
+        <ul class="page-links">
+          <li>
+            <a href="training.html">
+              <span aria-hidden="true">♙</span>
+              <strong>Сургалт</strong>
+              <small>Гурван түвшин, хуваарь, төлбөр, шатрын бодлого</small>
+            </a>
+          </li>
+          <li>
+            <a href="coaches.html">
+              <span aria-hidden="true">♜</span>
+              <strong>Багш нар</strong>
+              <small>Хичээл заах багш, дасгалжуулагчдын танилцуулга</small>
+            </a>
+          </li>
+          <li>
+            <a href="athletes.html">
+              <span aria-hidden="true">♞</span>
+              <strong>Тамирчид, амжилт</strong>
+              <small>Тамирчны замнал болон баталгаажсан тэмцээний амжилт</small>
+            </a>
+          </li>
+          <li>
+            <a href="contact.html">
+              <span aria-hidden="true">♛</span>
+              <strong>Элсэлт, холбоо барих</strong>
+              <small>Бүртгүүлэх алхам, утас, хаяг, түгээмэл асуулт</small>
+            </a>
+          </li>
+        </ul>
+      </section>
+
+      <!-- Элсэлтийн уриалга -->
+      <section class="cta-band" aria-labelledby="cta-title">
+        <div class="container">
+          <div>
+            <h2 id="cta-title">Хүүхдээ бүртгүүлэх үү?</h2>
+            <p>
+              Хүүхдийн нас, шатрын мэдлэгийг багшид хэлээд тохирох бүлэг, ээлжээ сонгоорой.
+              Урьдчилсан мэдлэг шаардахгүй.
+            </p>
+          </div>
+          <div class="actions">
+            <a class="button gold" href="contact.html">Элсэх алхмыг үзэх ↗</a>
+            <a class="button outline-light" href="tel:+97680344372" data-club-href="phone">
+              <span>
+                Утас:&nbsp;
+                <span data-club="phone">8034-4372</span>
+              </span>
+            </a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Хөл хэсэг (бүх хуудсанд ижил) -->
+    <footer>
+      <div class="container footer-top">
+        <a class="brand" href="index.html" aria-label="Шатрын клуб — Нүүр хуудас">
+          <img src="assets/club-logo.svg" width="48" height="48" alt="" />
+          <span>
+            ШАТРЫН КЛУБ
+            <small>14 дүгээр сургууль</small>
+          </span>
+        </a>
+        <p>
+          Мэдлэгийг нүүдэлд.
+          <br />
+          Хичээл зүтгэлийг хөгжилд.
+        </p>
+        <nav class="footer-nav" aria-label="Хөл хэсгийн цэс">
+          <ul>
+            <li><a href="index.html" aria-current="page">Нүүр</a></li>
+            <li><a href="training.html">Сургалт</a></li>
+            <li><a href="coaches.html">Багш нар</a></li>
+            <li><a href="athletes.html">Тамирчид</a></li>
+            <li><a href="contact.html">Холбоо барих</a></li>
+          </ul>
+        </nav>
+        <ul class="footer-contact">
+          <li>
+            <a href="tel:+97680344372" data-club-href="phone">
+              <span>
+                Утас:&nbsp;
+                <span data-club="phone">8034-4372</span>
+              </span>
+            </a>
+          </li>
+          <li>
+            <a href="mailto:14-schoolchessclub@gmail.com" data-club-href="email">
+              <span data-club="email">14-schoolchessclub@gmail.com</span>
+            </a>
+          </li>
+          <li>
+            <a
+              href="https://14school.mn/"
+              target="_blank"
+              rel="noopener"
+              data-club-href="schoolUrl"
+            >
+              Сургуулийн цахим хуудас ↗
+            </a>
+          </li>
+        </ul>
+      </div>
+      <div class="container footer-bottom">
+        <span>© 2026 · 14 дүгээр сургуулийн шатрын клуб</span>
+        <a href="admin.html" rel="nofollow">Админ</a>
+        <a href="#main">Дээш буцах ↑</a>
+      </div>
+    </footer>
+  </body>
+</html>

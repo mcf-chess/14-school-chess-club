@@ -1,0 +1,552 @@
+/*
+  Админ хэсгийн загвар (admin.html).
+  Өнгө, фонтыг css/style.css дэх :root хувьсагчдаас авна.
+*/
+
+/* ==========================================================================
+   Хуудасны бүтэц
+   ========================================================================== */
+
+.admin-main {
+  max-width: 980px;
+  padding-block: 48px 96px;
+}
+
+.admin-main .page-title {
+  margin-bottom: 24px;
+}
+
+.admin-back {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.admin-back:hover {
+  color: var(--blue);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+   Мэдэгдэл
+   ========================================================================== */
+
+.admin-status {
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border: 1px solid #bfdfcb;
+  border-radius: 10px;
+  background: #edf8f1;
+  color: #1f6847;
+  font-size: 15px;
+}
+
+.admin-status.is-error {
+  border-color: #f0c4c0;
+  background: #fdf0ef;
+  color: #9b1c13;
+}
+
+.admin-status:empty {
+  display: none;
+}
+
+:root[data-theme='dark'] .admin-status {
+  border-color: #2f6b4c;
+  background: #12301f;
+  color: #b9ebcf;
+}
+
+:root[data-theme='dark'] .admin-status.is-error {
+  border-color: #7f2f2a;
+  background: #3a1513;
+  color: #ffc9c4;
+}
+
+.admin-notice,
+.admin-card {
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.admin-notice p {
+  margin-top: 12px;
+  color: var(--muted);
+}
+
+.admin-notice code {
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--soft);
+  font-size: 14px;
+}
+
+.admin-card {
+  max-width: 460px;
+}
+
+.admin-hint {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.admin-hint:empty {
+  display: none;
+}
+
+/* ==========================================================================
+   Маягт
+   ========================================================================== */
+
+.admin-form {
+  display: grid;
+  gap: 8px;
+}
+
+.admin-form label {
+  margin-top: 12px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.admin-form .required {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 400;
+}
+
+.admin-form input[type='text'],
+.admin-form input[type='email'],
+.admin-form input[type='password'],
+.admin-form input[type='number'],
+.admin-form input[type='date'],
+.admin-form select,
+.admin-form textarea,
+.admin-search input,
+.admin-search select {
+  width: 100%;
+  min-height: 46px;
+  padding: 10px 12px;
+  border: 1px solid #8f9bb8;
+  border-radius: 8px;
+  background: var(--body);
+  color: var(--ink);
+  font: inherit;
+  font-size: 16px; /* iOS дээр талбарт ороход дэлгэц томрохоос сэргийлнэ */
+}
+
+.admin-form textarea {
+  resize: vertical;
+}
+
+.admin-form input:focus-visible,
+.admin-form select:focus-visible,
+.admin-form textarea:focus-visible,
+.admin-search input:focus-visible,
+.admin-search select:focus-visible {
+  outline: 3px solid #d5ad40;
+  outline-offset: 2px;
+}
+
+.admin-form fieldset {
+  margin: 20px 0 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.admin-form legend {
+  padding-inline: 8px;
+  font-weight: 700;
+}
+
+.admin-form .button {
+  justify-content: center;
+  min-height: 48px;
+  margin-top: 16px;
+  border: 0;
+}
+
+.admin-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 16px;
+}
+
+.admin-grid > div {
+  display: grid;
+  gap: 8px;
+  align-content: start;
+}
+
+.admin-form .check {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  gap: 10px;
+  align-items: start;
+  min-height: 44px;
+  margin-top: 8px;
+  padding-block: 10px;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.check input {
+  width: 22px;
+  height: 22px;
+  margin: 1px 0 0;
+  accent-color: #244de9;
+}
+
+.check input:disabled + span {
+  color: var(--muted);
+}
+
+.admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.admin-actions .button {
+  margin-top: 0;
+}
+
+/* ==========================================================================
+   Товч
+   ========================================================================== */
+
+.admin-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 8px 16px;
+  border: 1px solid #8f9bb8;
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-button:hover {
+  border-color: var(--blue);
+  color: var(--blue);
+}
+
+.admin-button.is-danger {
+  border-color: #c9352b;
+  color: #b3261e;
+}
+
+.admin-button.is-danger:hover {
+  background: #b3261e;
+  color: #fff;
+}
+
+:root[data-theme='dark'] .admin-button.is-danger {
+  border-color: #ff9a92;
+  color: #ffb4ad;
+}
+
+.admin-button:disabled,
+.button:disabled {
+  opacity: 0.55;
+  cursor: progress;
+}
+
+label.admin-button:has(+ input:focus-visible) {
+  outline: 3px solid #d5ad40;
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   Удирдах самбар
+   ========================================================================== */
+
+.admin-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 24px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.admin-bar strong {
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.admin-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--line);
+}
+
+.admin-tabs button {
+  min-height: 48px;
+  margin-bottom: -1px;
+  padding: 10px 18px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: none;
+  color: var(--muted);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.admin-tabs button[aria-selected='true'] {
+  border-bottom-color: var(--blue);
+  color: var(--blue);
+}
+
+.admin-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.admin-toolbar .button {
+  min-height: 46px;
+  border: 0;
+}
+
+.admin-search {
+  display: grid;
+  flex: 1 1 260px;
+  gap: 6px;
+  max-width: 420px;
+}
+
+.admin-search label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.admin-rows {
+  display: grid;
+  gap: 12px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.admin-row > div:first-child {
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+.admin-row strong {
+  font-size: 17px;
+  overflow-wrap: anywhere;
+}
+
+.admin-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.admin-empty {
+  padding: 28px 20px;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  color: var(--muted);
+  text-align: center;
+}
+
+.admin-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.admin-badge {
+  padding: 3px 10px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.admin-badge.is-live,
+.admin-badge.is-ok {
+  color: #1f6847;
+}
+
+.admin-badge.is-draft {
+  color: #4a5876;
+}
+
+.admin-badge.is-warn {
+  color: #8a4b07;
+}
+
+:root[data-theme='dark'] .admin-badge.is-live,
+:root[data-theme='dark'] .admin-badge.is-ok {
+  color: #9be3bd;
+}
+
+:root[data-theme='dark'] .admin-badge.is-draft {
+  color: #b9c6e4;
+}
+
+:root[data-theme='dark'] .admin-badge.is-warn {
+  color: #f5c98a;
+}
+
+/* ==========================================================================
+   Цонх (dialog)
+   ========================================================================== */
+
+.admin-dialog {
+  width: min(640px, calc(100% - 24px));
+  max-height: calc(100% - 24px);
+  padding: 28px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.admin-dialog.is-small {
+  width: min(440px, calc(100% - 24px));
+}
+
+.admin-dialog::backdrop {
+  background: #0b1a4a99;
+}
+
+.admin-dialog > p {
+  margin-top: 12px;
+  color: var(--muted);
+}
+
+/* ==========================================================================
+   Зураг сонгох
+   ========================================================================== */
+
+.photo-field {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.photo-field .admin-button {
+  margin: 0 8px 8px 0;
+}
+
+.photo-preview {
+  display: grid;
+  place-items: center;
+  width: 120px;
+  height: 120px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--soft);
+  color: var(--blue);
+  font:
+    52px/1 Georgia,
+    serif;
+}
+
+.photo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ==========================================================================
+   Гар утас (650px хүртэл)
+   ========================================================================== */
+
+@media (max-width: 650px) {
+  .admin-main {
+    padding-block: 32px 64px;
+  }
+
+  .admin-notice,
+  .admin-card,
+  .admin-dialog {
+    padding: 20px;
+  }
+
+  .admin-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-toolbar .button,
+  .admin-search {
+    flex-basis: 100%;
+    max-width: none;
+  }
+
+  .admin-toolbar .button {
+    justify-content: center;
+  }
+
+  .admin-tabs button {
+    flex: 1;
+    padding-inline: 8px;
+  }
+
+  .admin-row-actions,
+  .admin-actions {
+    width: 100%;
+  }
+
+  .admin-row-actions .admin-button,
+  .admin-actions > * {
+    flex: 1 1 auto;
+  }
+
+  .photo-field {
+    grid-template-columns: 88px 1fr;
+  }
+
+  .photo-preview {
+    width: 88px;
+    height: 88px;
+  }
+}

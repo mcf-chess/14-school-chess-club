@@ -1,0 +1,3675 @@
+/*
+  14 дүгээр сургуулийн шатрын клуб — үндсэн загвар
+
+  Бүтэц:
+    1. Өнгө, фонтын хувьсагчид (:root)
+    2. Суурь тохиргоо
+    3. Нийтлэг хэрэгслүүд
+    4. Хуудасны хэсгүүд — сайт дээр харагдах дарааллаар
+    5. Дэлгэцийн хэмжээ бүрийн тохиргоо (@media) — файлын төгсгөлд
+
+  Өнгө солихдоо зөвхөн :root доторх хувьсагчийг засна.
+*/
+
+/* ==========================================================================
+   Өнгө, фонтын хувьсагчид
+   ========================================================================== */
+
+:root {
+  --gold: #e6c465;
+  --font: Arial, Helvetica, sans-serif;
+  --body: #fff;
+  --surface: #fff;
+  --paper: #f3f6ff;
+  --soft: #e9efff;
+  --ink: #101d50;
+  --muted: #586582;
+  --blue: #244de9;
+  --navy: #122b7c;
+  --line: #dce4f7;
+  --hero: #f2f6ff;
+  --accent: #f6db48;
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  --body: #0d1734;
+  --surface: #152347;
+  --paper: #111f40;
+  --soft: #1b3060;
+  --ink: #f4f7ff;
+  --muted: #b9c6e4;
+  --blue: #94b4ff;
+  --navy: #09122b;
+  --line: #2e426b;
+  --hero: #14264f;
+  --accent: #f6db48;
+  color-scheme: dark;
+}
+
+/* ==========================================================================
+   Суурь тохиргоо
+   ========================================================================== */
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 110px;
+}
+
+body {
+  margin: 0;
+  background: var(--body);
+  color: var(--ink);
+  font:
+    16px/1.75 Arial,
+    Helvetica,
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+button {
+  font: inherit;
+  -webkit-tap-highlight-color: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+input {
+  font: inherit;
+  touch-action: manipulation;
+}
+
+img {
+  max-width: 100%;
+}
+
+h1,
+h2 {
+  margin: 0;
+  font-family: 'Times New Roman', Times, serif;
+  font-weight: 400;
+  line-height: 1.06;
+  letter-spacing: -0.035em;
+}
+
+h2 {
+  font-size: clamp(38px, 4.1vw, 58px);
+}
+
+h3,
+h4 {
+  margin: 0;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+}
+
+h3 {
+  font-size: 20px;
+}
+
+p {
+  margin: 0;
+  text-wrap: pretty;
+}
+
+button:focus-visible,
+a:focus-visible,
+summary:focus-visible,
+input:focus-visible {
+  outline: 3px solid #d5ad40;
+  outline-offset: 5px;
+}
+
+button:disabled {
+  cursor: default;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+#team {
+  border-top: 1px solid var(--line);
+}
+
+/* ==========================================================================
+   Нийтлэг хэрэгслүүд: контейнер, гарчиг, товч
+   ========================================================================== */
+
+.container {
+  width: calc(100% - 112px);
+  max-width: 1240px;
+  margin: auto;
+}
+
+.skip {
+  position: fixed;
+  top: -80px;
+  left: 10px;
+  z-index: 100;
+  padding: 12px 16px;
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 6px 24px #0b1a4a33;
+}
+
+.skip:focus {
+  top: 10px;
+}
+
+.dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin: 0 8px 1px 0;
+  border-radius: 50%;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 25px;
+  min-height: 49px;
+  padding: 13px 22px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 500;
+  transition:
+    background 0.18s,
+    transform 0.18s;
+}
+
+.button:hover {
+  transform: translateY(-2px);
+}
+
+.section-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 60px;
+  margin-bottom: 50px;
+}
+
+.text-link {
+  display: inline-block;
+  color: var(--blue);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.8;
+}
+
+.plain-light {
+  border: 0;
+  background: transparent;
+}
+
+.section-intro,
+.section-heading .section-intro {
+  max-width: 380px;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.85;
+}
+
+.section {
+  padding-block: 100px;
+}
+
+.eyebrow {
+  margin-bottom: 22px;
+  color: var(--blue);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+}
+
+.section-heading > div {
+  flex-shrink: 1;
+}
+
+.gold {
+  background: #244de9;
+  box-shadow: 0 6px 16px #244de91a;
+  color: white;
+}
+
+.gold:hover {
+  background: #173ac3;
+  color: #fff;
+}
+
+/* ==========================================================================
+   Сургуулийн мөр ба толгой хэсэг
+   ========================================================================== */
+
+.school-bar .container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 30px;
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  border-bottom: 1px solid var(--line);
+  border-color: var(--line);
+  background: var(--body);
+}
+
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 25px;
+  min-height: 90px;
+}
+
+.brand {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 12px;
+}
+
+.brand img {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+}
+
+.brand > span {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: 0.015em;
+}
+
+.brand small {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+.header nav {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.header nav > a:hover {
+  color: var(--blue);
+}
+
+.nav-cta {
+  gap: 25px;
+  padding: 11px 18px;
+  border: 1px solid #ccd3e2;
+  border-radius: 4px;
+}
+
+.menu {
+  display: none;
+}
+
+.header-tools {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.theme-toggle {
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 22px;
+}
+
+.school-bar {
+  border-bottom: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+
+.header nav {
+  gap: 25px;
+  font-size: 13px;
+}
+
+/* ==========================================================================
+   Нүүр хэсэг
+   ========================================================================== */
+
+.hero {
+  position: relative;
+  isolation: auto;
+  padding-top: 24px;
+  background: var(--body);
+}
+
+.hero-photo {
+  top: 55px;
+  right: max(40px, calc((100vw - 1180px) / 2));
+  bottom: auto;
+  width: 41%;
+  height: 390px;
+  object-position: 60% 60%;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 30px;
+}
+
+.hero-link {
+  display: flex;
+  gap: 17px;
+  padding-block: 9px;
+  border-bottom: 1px solid var(--line);
+  border-color: #b9c9f4;
+  color: var(--blue);
+  font-size: 13px;
+}
+
+.hero-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 32px;
+  color: var(--muted);
+}
+
+.hero-note > span {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 32px;
+  border-radius: 50%;
+  color: var(--blue);
+  font-family: serif;
+  font-size: 24px;
+}
+
+.hero-note p {
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.hero-content {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: 1.07fr 1fr;
+  align-items: center;
+  gap: 42px;
+  min-height: 0;
+  margin-bottom: 28px;
+  padding: 48px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  background: linear-gradient(125deg, var(--paper), var(--soft));
+}
+
+.hero-copy {
+  max-width: none;
+}
+
+.hero h1 {
+  font-size: clamp(58px, 6vw, 84px);
+  font-weight: 500;
+  line-height: 1.01;
+  letter-spacing: -0.045em;
+}
+
+.hero h1 > span {
+  color: var(--blue);
+}
+
+.hero .eyebrow {
+  margin-bottom: 30px;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+}
+
+.hero .dot {
+  width: 5px;
+  height: 5px;
+  background: #efd530;
+}
+
+.hero-lead {
+  max-width: 390px;
+  margin-top: 28px;
+  color: var(--muted);
+  line-height: 1.85;
+}
+
+.hero .actions {
+  flex-direction: row;
+  gap: 24px;
+}
+
+.hero-note strong {
+  font-weight: 400;
+}
+
+.hero-visual {
+  position: relative;
+  align-self: stretch;
+  min-width: 0;
+  min-height: 480px;
+  margin: 0;
+  overflow: hidden;
+  border-radius: 20px;
+  background: #2146d7;
+}
+
+.hero .hero-photo {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 25%;
+}
+
+.hero-visual:after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, #102e9bd9, transparent 45%);
+  content: '';
+}
+
+.visual-top {
+  position: absolute;
+  top: 26px;
+  right: 28px;
+  left: 28px;
+  z-index: 1;
+  display: flex;
+  justify-content: space-between;
+  color: #e6edff;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-shadow: 0 1px 8px #12347688;
+}
+
+.visual-caption {
+  position: absolute;
+  right: 25px;
+  bottom: 30px;
+  left: 30px;
+  z-index: 1;
+  color: #fff;
+}
+
+.visual-caption span {
+  display: block;
+  font:
+    31px/1.15 'Times New Roman',
+    serif;
+  font-size: clamp(26px, 2.3vw, 34px);
+  letter-spacing: -0.02em;
+}
+
+.visual-caption small {
+  display: block;
+  margin-top: 10px;
+  color: #e2eaff;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+}
+
+.hero-courses {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-column: 1/-1;
+  gap: 15px;
+}
+
+.hero-course {
+  display: grid;
+  grid-template-columns: 1fr 40px;
+  align-items: center;
+  gap: 10px;
+  padding: 21px 24px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+}
+
+.hero-course:hover {
+  box-shadow: 0 12px 25px #1e47b216;
+  transform: translateY(-3px);
+}
+
+.hero-course strong {
+  display: block;
+  font-weight: 600;
+}
+
+.hero-course small {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.hero-course > span {
+  color: var(--blue);
+  font:
+    38px/1 Georgia,
+    serif;
+  text-align: center;
+}
+
+.hero-course:first-child {
+  border-top: 3px solid #edda48;
+}
+
+.hero-course:nth-child(2) {
+  border-top: 3px solid #84a4ff;
+}
+
+.hero-course:nth-child(3) {
+  border-top: 3px solid #244de9;
+}
+
+.hero-visual::after {
+  background: linear-gradient(0deg, #061d64e6, transparent 43%);
+}
+
+/* ==========================================================================
+   Товч мэдээллийн мөр
+   ========================================================================== */
+
+.quick-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  padding-block: 26px;
+}
+
+.quick-grid > div,
+.quick-grid > a {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-left: 27px;
+  border-left: 1px solid #d9dee9;
+  border-color: var(--line);
+}
+
+.quick-grid > :first-child {
+  padding-left: 0;
+  border: 0;
+}
+
+.quick-grid small {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+}
+
+.quick-info {
+  border-block: 1px solid var(--line);
+  background: var(--body);
+}
+
+.quick-icon {
+  color: var(--blue);
+  font-size: 24px;
+}
+
+.quick-grid strong {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+/* ==========================================================================
+   Шатрын ач тус
+   ========================================================================== */
+
+.benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  row-gap: 38px;
+  column-gap: 45px;
+}
+
+.benefits-grid p {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.85;
+}
+
+.benefit-note {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 25px;
+  margin-top: 42px;
+  padding: 28px 0 0;
+  border-top: 1px solid var(--line);
+}
+
+.benefit-note p {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.benefits-grid article {
+  padding: 25px 0 0;
+  border-top: 1px solid var(--line);
+}
+
+.benefit-icon {
+  display: grid;
+  place-items: center;
+  width: 88px;
+  height: 88px;
+  margin-bottom: 18px;
+  background: radial-gradient(ellipse at 50% 70%, #dce6ff 0, #f2f6ff 60%, transparent 72%);
+  color: var(--blue);
+  font:
+    35px/1.2 'Times New Roman',
+    serif;
+}
+
+.benefits-grid h3 {
+  margin-bottom: 12px;
+}
+
+.benefit-note strong {
+  font-weight: 500;
+}
+
+.benefit-icon img {
+  width: 76px;
+  height: 76px;
+  transition: transform 0.25s ease;
+}
+
+.benefits-grid article:hover .benefit-icon img {
+  transform: translateY(-4px) rotate(-3deg);
+}
+
+:root[data-theme='dark'] .benefit-icon {
+  background: radial-gradient(ellipse, #25457e 0, transparent 72%);
+}
+
+/* ==========================================================================
+   Сургалтын хөтөлбөр
+   ========================================================================== */
+
+.program-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  border-bottom: 1px solid #d3d9e7;
+  border-color: var(--line);
+}
+
+.program-tabs button {
+  margin-bottom: -1px;
+  padding: 20px 15px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: none;
+  color: var(--muted);
+  font-size: 15px;
+  text-align: left;
+}
+
+.program-tabs button span {
+  margin-right: 14px;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.program-panel {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 45px;
+  margin-top: 35px;
+  overflow: hidden;
+}
+
+.program-overview {
+  position: relative;
+  padding: 25px 30px 25px 0;
+  overflow: hidden;
+  border-right: 1px solid var(--line);
+}
+
+.program-overview .program-title {
+  position: relative;
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 43px;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.035em;
+}
+
+.program-overview > p:not(.eyebrow) {
+  position: relative;
+  max-width: 320px;
+  margin-top: 20px;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.program-overview .text-link {
+  position: relative;
+  margin-top: 25px;
+}
+
+.program-piece {
+  position: absolute;
+  top: 25px;
+  right: 15px;
+  opacity: 0.12;
+  color: var(--blue);
+  font-family: serif;
+  font-size: 165px;
+  line-height: 1;
+}
+
+.check-list {
+  margin: 22px 0 26px;
+  padding: 0;
+  list-style: none;
+}
+
+.check-list li {
+  position: relative;
+  margin: 14px 0;
+  padding-left: 25px;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.85;
+}
+
+.check-list li:before {
+  position: absolute;
+  left: 0;
+  color: var(--blue);
+  font-weight: 700;
+  content: '✓';
+}
+
+.learning-result {
+  padding-top: 19px;
+  border-top: 1px solid var(--line);
+}
+
+.learning-result span {
+  color: var(--blue);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+
+.learning-result p {
+  margin-top: 7px;
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.program-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  margin-top: 24px;
+  padding-top: 23px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.program-foot a {
+  color: var(--blue);
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.program {
+  border-block: 1px solid var(--line);
+  background: var(--paper);
+}
+
+.program-tabs button[aria-selected='true'] {
+  border-bottom-color: var(--blue);
+  color: var(--blue);
+}
+
+.program-detail {
+  padding: 25px 0;
+}
+
+.program-detail .program-subtitle {
+  font-size: 17px;
+}
+
+/* ==========================================================================
+   Багш нар
+   ========================================================================== */
+
+.team-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 28px;
+}
+
+.coach {
+  display: flex;
+  flex-direction: column;
+}
+
+.coach-highlight {
+  margin-top: 13px;
+  color: var(--blue);
+  font-size: 13px;
+}
+
+.coach ul {
+  margin-block: 20px;
+  padding-left: 16px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.9;
+}
+
+.coach li {
+  padding-bottom: 6px;
+}
+
+.coach-duty {
+  min-height: 62px;
+  margin-top: auto;
+  padding-top: 18px;
+  border-top: 1px solid var(--line);
+  border-color: var(--line);
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.coach-photo {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 380px;
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--paper);
+}
+
+.coach-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 25%;
+  transition: transform 0.45s ease;
+}
+
+/* Зураг бүрийн царай голд харагдах байрлал */
+[data-teacher='oyunchimeg'] .coach-photo img {
+  object-position: center 20%;
+}
+
+[data-teacher='ganerdene'] .coach-photo img {
+  object-position: center 54%;
+}
+
+[data-teacher='chinguun'] .coach-photo img {
+  object-position: 62% 30%;
+}
+
+.coach-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 25px 0 0;
+}
+
+.coach:hover .coach-photo img {
+  transform: scale(1.025);
+}
+
+.coach .eyebrow {
+  margin-bottom: 14px;
+  font-size: 11px;
+  letter-spacing: 0.07em;
+}
+
+.coach .coach-name {
+  font-size: 24px;
+  line-height: 1.25;
+}
+
+.coach-body ul {
+  flex: 1 1 auto;
+}
+
+.coach-body .coach-duty {
+  min-height: 5.6em;
+}
+
+/* ==========================================================================
+   Хичээлийн хуваарь ба төлбөр
+   ========================================================================== */
+
+.schedule-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  border-block: 1px solid var(--line);
+}
+
+.slot-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+}
+
+.slot h3 {
+  margin-top: 30px;
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 39px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.04em;
+}
+
+.slot h3 span {
+  margin: 0 4px;
+  color: var(--muted);
+  font-size: 21px;
+}
+
+.slot p {
+  min-height: 44px;
+  margin-top: 13px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.slot a {
+  display: block;
+  margin-top: 12px;
+  padding-top: 19px;
+  color: var(--blue);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.schedule-note span {
+  margin-right: 8px;
+  color: var(--blue);
+}
+
+.schedule-note a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.schedule-note {
+  margin-top: 24px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.9;
+}
+
+.slot,
+.slot.featured {
+  padding: 30px;
+  border-right: 1px solid var(--line);
+}
+
+.slot:first-child {
+  padding-left: 0;
+}
+
+.slot:last-child {
+  border: 0;
+}
+
+.featured .slot-top {
+  color: var(--blue);
+}
+
+.fee-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 25px;
+  margin-top: 35px;
+  padding: 30px 34px;
+  border: 1px solid var(--line);
+  border-left: 4px solid #ead236;
+  border-radius: 18px;
+  background: var(--soft);
+}
+
+.fee-banner p {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.fee-banner strong {
+  color: var(--blue);
+  font-family: 'Times New Roman', serif;
+  font-size: 39px;
+  font-weight: 400;
+  letter-spacing: -0.04em;
+}
+
+.fee-banner strong small {
+  color: var(--muted);
+  font-family: Arial, sans-serif;
+  font-size: 13px;
+  letter-spacing: 0;
+}
+
+.fee-banner .text-link {
+  color: var(--ink);
+}
+
+/* ==========================================================================
+   Шатрын бодлого
+   ========================================================================== */
+
+.practice-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: clamp(36px, 5vw, 80px);
+}
+
+.practice-copy > p:not(.eyebrow) {
+  max-width: 450px;
+  margin-top: 24px;
+  color: #d4dffb;
+  font-size: 15px;
+  line-height: 1.85;
+}
+
+.puzzle-task {
+  margin-top: 30px;
+  padding-left: 20px;
+  border-left: 2px solid var(--gold);
+  border-color: #4862a2;
+}
+
+.puzzle-task > span {
+  color: #f0d94e;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+}
+
+.puzzle-task h3 {
+  margin-top: 8px;
+  font-size: 23px;
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.practice-copy p.practice-instruction {
+  max-width: 400px;
+  font-size: 12px;
+}
+
+.puzzle-controls {
+  display: flex;
+  align-items: center;
+  gap: 25px;
+  margin-top: 26px;
+}
+
+.board-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 17px;
+  color: #566786;
+  font-size: 11px;
+  letter-spacing: 0.07em;
+}
+
+.board-frame {
+  display: grid;
+  grid-template-columns: 12px 1fr;
+  gap: 6px;
+}
+
+.ranks,
+.files {
+  display: grid;
+  color: #899bbd;
+  font-size: 11px;
+}
+
+.ranks {
+  grid-template-rows: repeat(8, 1fr);
+  align-items: center;
+}
+
+.files {
+  grid-template-columns: repeat(8, 1fr);
+  grid-column: 2;
+  text-align: center;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  aspect-ratio: 1;
+  overflow: hidden;
+  border: 4px solid #243c71;
+  border-radius: 8px;
+  box-shadow: 0 7px 18px #1533671a;
+  touch-action: manipulation;
+}
+
+.square {
+  position: relative;
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: #e3e7ed;
+  font-family: Georgia, 'DejaVu Sans', serif;
+  font-size: clamp(28px, 3vw, 45px);
+  line-height: 1;
+}
+
+.square.selected {
+  background: #e0c264 !important;
+}
+
+.square.last {
+  box-shadow: inset 0 0 0 4px #d8b34c;
+}
+
+.square:focus-visible {
+  z-index: 1;
+  outline: 3px solid #efc44c;
+  outline-offset: -3px;
+}
+
+.practice .plain-light {
+  color: #d9e4ff;
+  font-size: 13px;
+}
+
+.practice {
+  background: #142d83;
+  color: #f6f5ee;
+}
+
+.practice .outline-light {
+  border: 0;
+  border-radius: 9px;
+  background: #fff;
+  color: #244de9;
+}
+
+.practice .eyebrow {
+  color: #f0d94e;
+}
+
+.practice h2,
+.practice h2 > span,
+.practice h3 {
+  color: #fff;
+}
+
+.puzzle-shell {
+  padding: 26px;
+  border: 1px solid #ffffff45;
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 24px 70px #06174740;
+  color: #14244e;
+}
+
+.board-heading > div {
+  display: grid;
+  gap: 4px;
+}
+
+.puzzle-eyebrow {
+  color: #7181a0;
+  font:
+    11px/1.5 Arial,
+    sans-serif;
+  letter-spacing: 0.11em;
+}
+
+.board-heading strong {
+  color: #14244e;
+  font:
+    600 17px/1.4 Arial,
+    sans-serif;
+  letter-spacing: 0;
+}
+
+.puzzle-count {
+  flex-shrink: 0;
+  padding: 6px 10px;
+  border: 1px solid #dbe4f4;
+  border-radius: 30px;
+  color: #244de9;
+  font:
+    600 12px/1.3 Arial,
+    sans-serif;
+  letter-spacing: 0;
+}
+
+.puzzle-turn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 14px 18px;
+  color: #354a70;
+}
+
+.puzzle-turn > span {
+  width: 10px;
+  height: 10px;
+  border: 1px solid #8c9bb5;
+  border-radius: 50%;
+  background: #fff;
+}
+
+.puzzle-turn strong {
+  font:
+    500 12px/1.4 Arial,
+    sans-serif;
+}
+
+.puzzle-turn small {
+  margin-left: auto;
+  color: #7181a0;
+  font:
+    12px/1.4 Arial,
+    sans-serif;
+}
+
+.board .square.light {
+  background: #eff3fc;
+}
+
+.board .square.dark {
+  background: #7693c8;
+}
+
+.board .square {
+  overflow: hidden;
+  transition: background-color 0.15s;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.board .square img {
+  position: relative;
+  z-index: 1;
+  width: 86%;
+  height: 86%;
+  object-fit: contain;
+  pointer-events: none;
+  transition: transform 0.18s;
+}
+
+.board .square:hover {
+  box-shadow: inset 0 0 0 3px #244de96b;
+}
+
+.board .square.selected {
+  background: #f7dc69 !important;
+  box-shadow: inset 0 0 0 3px #cb9d24;
+}
+
+.board .square.selected img {
+  transform: translateY(-2px) scale(1.03);
+}
+
+.board .square.available::after {
+  position: absolute;
+  width: 21%;
+  height: 21%;
+  border-radius: 50%;
+  background: #173f8860;
+  content: '';
+}
+
+.board .square.last {
+  background: #bde1cd;
+  box-shadow: inset 0 0 0 3px #20845d;
+}
+
+.board .square.answer {
+  box-shadow: inset 0 0 0 4px #ecc842;
+}
+
+.puzzle-message {
+  min-height: 78px;
+  margin-top: 17px;
+  padding: 13px 15px;
+  border: 1px solid #e1e8f5;
+  border-radius: 11px;
+  background: #f0f4fc;
+  color: #435879;
+  font:
+    13px/1.7 Arial,
+    sans-serif;
+}
+
+.puzzle-message.success {
+  border-color: #bfdfcb;
+  background: #edf8f1;
+  color: #1f6847;
+}
+
+.puzzle-message.error {
+  border-color: #efdfb9;
+  background: #fff8ec;
+  color: #825b1e;
+}
+
+.puzzle-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.puzzle-bottom > span {
+  color: #6a7c9c;
+  font-size: 12px;
+}
+
+.puzzle-bottom button {
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: #244de9;
+  color: #fff;
+  font:
+    600 12px/1.4 Arial,
+    sans-serif;
+}
+
+.puzzle-bottom button:disabled {
+  background: #edf1f8;
+  color: #687a98;
+}
+
+.is-solved .puzzle-turn > span {
+  border-color: #20845d;
+  background: #34a36b;
+}
+
+/* ==========================================================================
+   Түвшин сонгох
+   ========================================================================== */
+
+.level-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 80px;
+}
+
+.level-layout .section-intro {
+  margin-top: 24px;
+  font-size: 16px;
+}
+
+fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+legend {
+  margin-bottom: 20px;
+}
+
+.level-card label {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 10px;
+  padding: 20px 15px;
+  border-bottom: 1px solid var(--line);
+  border-radius: 10px;
+  font-size: 15px;
+  line-height: 1.8;
+  cursor: pointer;
+}
+
+.level-card label:has(input:checked) {
+  border-color: var(--blue);
+  background: var(--soft);
+}
+
+.level-card input {
+  flex-shrink: 0;
+  margin-top: 5px;
+  accent-color: var(--blue);
+}
+
+.level-result {
+  min-height: 55px;
+  margin-top: 20px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.level-result strong {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--blue);
+  font-size: 16px;
+}
+
+.level-result a {
+  display: inline-block;
+  margin-top: 12px;
+  color: var(--blue);
+  font-weight: 800;
+}
+
+.level-card legend {
+  font-size: 17px;
+}
+
+/* ==========================================================================
+   Тамирчны замнал
+   ========================================================================== */
+
+.athlete-path {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 35px;
+}
+
+.athlete-path article > span {
+  display: block;
+  place-items: center;
+  width: auto;
+  height: auto;
+  margin-bottom: 25px;
+  color: var(--blue);
+  font:
+    38px 'Times New Roman',
+    serif;
+}
+
+.athlete-path .step-title {
+  font-size: 19px;
+  line-height: 1.35;
+}
+
+.athlete-path p {
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.athlete-callout {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  margin-top: 40px;
+  padding: 35px 0 0;
+  border-top: 1px solid var(--line);
+}
+
+.athlete-callout p {
+  max-width: 690px;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.athlete-callout .button {
+  flex-shrink: 0;
+}
+
+.athlete {
+  border-block: 1px solid var(--line);
+  background: var(--paper);
+}
+
+.athlete-path article {
+  padding-top: 25px;
+  border-top: 1px solid var(--line);
+}
+
+.athlete-callout .callout-title {
+  font:
+    30px/1.2 'Times New Roman',
+    serif;
+}
+
+/* ==========================================================================
+   Тамирчдын амжилт
+   ========================================================================== */
+
+.achievement-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.achievement-result {
+  display: inline-block;
+  margin-bottom: 20px;
+  padding: 5px 12px;
+  background: var(--soft);
+  color: var(--blue);
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.achievement-card p {
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.achievement-card time {
+  display: block;
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.achievements-empty {
+  display: flex;
+  grid-column: 1/-1;
+  align-items: center;
+  gap: 25px;
+  padding: 25px 0;
+  border-top: 1px solid var(--line);
+}
+
+.achievements-empty > span {
+  opacity: 0.5;
+  color: var(--blue);
+  font: 50px Georgia;
+}
+
+.achievements-empty p {
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.achievement-card {
+  padding: 25px 0;
+  border-top: 1px solid var(--line);
+}
+
+.achievements-empty h3 {
+  font-weight: 400;
+}
+
+/* ==========================================================================
+   Түгээмэл асуулт
+   ========================================================================== */
+
+.faq-layout {
+  display: grid;
+  grid-template-columns: 0.85fr 1.15fr;
+  gap: 100px;
+  border-top: 1px solid var(--line);
+}
+
+.faq-layout .section-intro {
+  margin-top: 24px;
+}
+
+.faq-layout .text-link {
+  margin-top: 20px;
+}
+
+.faq-list {
+  border-top: 1px solid #cbd4e3;
+  border-color: var(--line);
+}
+
+details {
+  border-bottom: 1px solid var(--line);
+}
+
+summary {
+  position: relative;
+  padding: 23px 35px 23px 0;
+  padding-block: 22px;
+  list-style: none;
+  cursor: pointer;
+}
+
+summary:after {
+  position: absolute;
+  top: 18px;
+  right: 2px;
+  color: #7e8fb3;
+  font-size: 22px;
+  content: '+';
+}
+
+details[open] summary:after {
+  content: '−';
+}
+
+details > p {
+  padding: 0 30px 23px 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.9;
+}
+
+/* ==========================================================================
+   Холбоо барих
+   ========================================================================== */
+
+.contact {
+  position: relative;
+  padding-block: 85px;
+  background: #142d83;
+  color: white;
+}
+
+.contact-layout {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  align-items: center;
+  gap: 95px;
+}
+
+.contact-layout > div > p:not(.eyebrow):not(.contact-small) {
+  max-width: 430px;
+  margin-top: 23px;
+  color: #d0ddfa;
+  font-size: 15px;
+}
+
+.contact-phone {
+  display: inline-flex;
+  align-items: center;
+  gap: 40px;
+  margin-top: 30px;
+  font-family: 'Times New Roman', serif;
+  font-size: 45px;
+}
+
+.contact-phone span {
+  color: var(--gold);
+  font-size: 28px;
+}
+
+.contact-small {
+  margin-top: 4px;
+  color: #91a2c3;
+  font-size: 12px;
+}
+
+.contact .actions {
+  gap: 12px;
+}
+
+.contact-card > .card-title {
+  margin-bottom: 24px;
+}
+
+.contact-card ol {
+  margin: 0 0 25px;
+  margin-top: 30px;
+  padding: 0;
+  list-style: none;
+}
+
+.contact-card li {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.contact-card li > span {
+  padding-top: 3px;
+  color: var(--gold);
+  font-size: 11px;
+}
+
+.contact-card li p {
+  margin-top: 5px;
+  color: #dae4fb;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.contact-detail {
+  padding: 14px 0;
+  border-top: 1px solid #ffffff1c;
+  border-color: #5871b3;
+}
+
+.contact-detail small {
+  color: #8fa3c6;
+  font-size: 11px;
+  letter-spacing: 0.09em;
+}
+
+.contact-detail p,
+.contact-detail a {
+  display: block;
+  margin-top: 4px;
+  color: #dae4fb;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.copy-contact {
+  margin-top: 10px;
+  padding: 3px 0;
+  border: 0;
+  border-bottom: 1px solid #798bab;
+  background: transparent;
+  color: #fff;
+  font-size: 12px;
+}
+
+#copy-status {
+  min-height: 18px;
+  margin-top: 7px;
+  color: #e2cf8f;
+}
+
+.contact h2 {
+  font:
+    54px/1.08 'Times New Roman',
+    Times,
+    serif;
+}
+
+.contact-card .card-title {
+  font:
+    29px 'Times New Roman',
+    serif;
+}
+
+.contact #copy-status {
+  font-size: 12px;
+}
+
+.contact-card {
+  padding: 0 0 0 45px;
+  border-left: 1px solid #5871b3;
+}
+
+.contact-card strong {
+  font-size: 15px;
+  font-weight: 400;
+}
+
+.contact h2 span {
+  color: #f3dc56;
+}
+
+.contact .eyebrow {
+  color: #e9d45b;
+}
+
+.contact .gold {
+  background: #fff;
+  color: #244de9;
+}
+
+.contact .outline-light {
+  border-color: #8199df;
+}
+
+/* ==========================================================================
+   Хөл хэсэг
+   ========================================================================== */
+
+footer {
+  padding-top: 35px;
+  background: var(--body);
+}
+
+.footer-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding-block: 40px;
+}
+
+.footer-top .brand > span {
+  font-size: 13px;
+}
+
+.footer-top > a:last-child {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.footer-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-block: 20px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.footer-top p {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* ==========================================================================
+   Таблет хэвтээ, жижиг зөөврийн компьютер (1100px хүртэл)
+   ========================================================================== */
+
+@media (max-width: 1100px) {
+  /* --- Нийтлэг хэрэгслүүд: контейнер, гарчиг, товч --- */
+
+  .container {
+    width: calc(100% - 64px);
+  }
+
+  .section-heading {
+    gap: 35px;
+  }
+
+  .section-heading .section-intro {
+    max-width: 340px;
+  }
+
+  /* --- Сургуулийн мөр ба толгой хэсэг --- */
+
+  .header nav {
+    gap: 17px;
+    font-size: 12px;
+  }
+
+  .header-inner {
+    gap: 17px;
+  }
+
+  /* --- Нүүр хэсэг --- */
+
+  .hero .actions {
+    align-items: flex-start;
+  }
+
+  .hero-photo {
+    right: 28px;
+  }
+
+  .hero-content {
+    gap: 30px;
+    padding: 32px;
+  }
+
+  .hero h1 {
+    font-size: 62px;
+  }
+
+  .hero-course {
+    padding: 19px;
+  }
+
+  .hero-course strong {
+    font-size: 14px;
+  }
+
+  .hero-visual {
+    min-height: 470px;
+  }
+
+  /* --- Шатрын ач тус --- */
+
+  .benefit-note {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  /* --- Багш нар --- */
+
+  .coach-photo {
+    height: 310px;
+  }
+
+  .coach .coach-name {
+    font-size: 22px;
+  }
+
+  /* --- Хичээлийн хуваарь ба төлбөр --- */
+
+  .slot {
+    padding: 25px 20px;
+  }
+
+  .slot h3 {
+    font-size: 33px;
+  }
+
+  /* --- Түвшин сонгох --- */
+
+  .level-layout {
+    gap: 50px;
+  }
+
+  /* --- Тамирчны замнал --- */
+
+  .athlete-callout {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  /* --- Түгээмэл асуулт --- */
+
+  .faq-layout {
+    gap: 50px;
+  }
+
+  /* --- Холбоо барих --- */
+
+  .contact-layout {
+    gap: 50px;
+  }
+
+  .contact h2 {
+    font-size: 46px;
+  }
+}
+
+/* ==========================================================================
+   Таблет (900px хүртэл)
+   ========================================================================== */
+
+@media (max-width: 900px) {
+  /* --- Нийтлэг хэрэгслүүд: контейнер, гарчиг, товч --- */
+
+  .section {
+    padding-block: 75px;
+  }
+
+  .section-heading {
+    align-items: flex-start;
+  }
+
+  /* --- Сургуулийн мөр ба толгой хэсэг --- */
+
+  .header-inner {
+    flex-wrap: wrap;
+    min-height: 80px;
+    padding-block: 14px;
+  }
+
+  .menu {
+    display: block;
+    order: 2;
+    margin-left: auto;
+    padding: 4px 11px;
+    border: 1px solid #cfd7e5;
+    border-color: var(--line);
+    border-radius: 4px;
+    background: var(--surface);
+    color: var(--ink);
+    font-size: 22px;
+  }
+
+  .js .header nav {
+    display: none;
+    flex: 0 0 100%;
+    justify-content: flex-start;
+    order: 4;
+    width: 100%;
+    padding: 15px 0 4px;
+    border-top: 1px solid var(--line);
+  }
+
+  .js .header nav.open {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .header-tools {
+    order: 3;
+  }
+
+  .header nav {
+    font-size: 14px;
+  }
+
+  /* --- Нүүр хэсэг --- */
+
+  .hero-lead {
+    font-size: 15px;
+  }
+
+  .hero .actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .hero .eyebrow {
+    font-size: 11px;
+  }
+
+  .hero-content {
+    gap: 25px;
+    padding: 28px;
+  }
+
+  .hero h1 {
+    font-size: 52px;
+  }
+
+  .hero-course {
+    grid-template-columns: 1fr 25px;
+    padding: 17px 14px;
+  }
+
+  .hero-course strong {
+    font-size: 13px;
+  }
+
+  .hero-course small {
+    font-size: 12px;
+  }
+
+  .hero-course > span {
+    font-size: 29px;
+  }
+
+  .hero-visual {
+    min-height: 460px;
+  }
+
+  /* --- Товч мэдээллийн мөр --- */
+
+  .quick-grid {
+    gap: 24px;
+  }
+
+  .quick-grid > :nth-child(3) {
+    padding-left: 0;
+    border: 0;
+  }
+
+  .quick-grid strong {
+    font-size: 13px;
+  }
+
+  .quick-grid small {
+    font-size: 11px;
+  }
+
+  .quick-grid > div,
+  .quick-grid > a {
+    gap: 10px;
+    padding-left: 15px;
+  }
+
+  /* --- Шатрын ач тус --- */
+
+  .benefits-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 30px;
+  }
+
+  /* --- Сургалтын хөтөлбөр --- */
+
+  .program-piece {
+    font-size: 125px;
+  }
+
+  .program-panel {
+    gap: 28px;
+  }
+
+  .program-overview .program-title {
+    font-size: 36px;
+  }
+
+  /* --- Багш нар --- */
+
+  .team-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  .coach:last-child {
+    grid-column: auto;
+  }
+
+  .coach-photo {
+    height: 270px;
+  }
+
+  .coach .coach-name {
+    font-size: 20px;
+  }
+
+  .coach .eyebrow {
+    font-size: 11px;
+  }
+
+  .coach ul {
+    font-size: 12px;
+  }
+
+  /* --- Хичээлийн хуваарь ба төлбөр --- */
+
+  .slot h3 span {
+    margin: 0 2px;
+    font-size: 17px;
+  }
+
+  .slot-top {
+    flex-direction: column;
+    gap: 3px;
+    font-size: 11px;
+  }
+
+  .slot h3 {
+    font-size: 28px;
+  }
+
+  /* --- Шатрын бодлого --- */
+
+  .practice-layout {
+    grid-template-columns: 1fr 1fr;
+    gap: 35px;
+  }
+
+  .practice h2 {
+    font-size: 35px;
+  }
+
+  .square {
+    font-size: 30px;
+  }
+
+  /* --- Түвшин сонгох --- */
+
+  .level-layout {
+    gap: 35px;
+  }
+
+  /* --- Тамирчны замнал --- */
+
+  .athlete-path {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* --- Тамирчдын амжилт --- */
+
+  .achievement-list {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* --- Түгээмэл асуулт --- */
+
+  .faq-layout {
+    gap: 40px;
+  }
+
+  /* --- Холбоо барих --- */
+
+  .contact-layout {
+    gap: 35px;
+  }
+
+  .contact-phone {
+    font-size: 38px;
+  }
+
+  .contact-card {
+    padding-left: 28px;
+  }
+
+  .contact h2 {
+    font-size: 40px;
+  }
+}
+
+/* ==========================================================================
+   Гар утас (650px хүртэл)
+   ========================================================================== */
+
+@media (max-width: 650px) {
+  /* --- Суурь тохиргоо --- */
+
+  html {
+    scroll-padding-top: 90px;
+  }
+
+  h2 {
+    font-size: 39px;
+    line-height: 1.1;
+  }
+
+  /* --- Нийтлэг хэрэгслүүд: контейнер, гарчиг, товч --- */
+
+  .container {
+    width: calc(100% - 40px);
+  }
+
+  .section {
+    padding-block: 56px;
+  }
+
+  .section-heading {
+    display: block;
+    margin-bottom: 30px;
+  }
+
+  .section-heading .section-intro {
+    max-width: none;
+    margin-top: 23px;
+    font-size: 14px;
+  }
+
+  .eyebrow {
+    margin-bottom: 18px;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+  }
+
+  /* --- Сургуулийн мөр ба толгой хэсэг --- */
+
+  .header-inner {
+    gap: 8px;
+    min-height: 72px;
+    padding-block: 12px;
+  }
+
+  .nav-cta {
+    padding: 7px 12px;
+  }
+
+  .school-bar span {
+    max-width: 210px;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .school-bar a {
+    max-width: 100px;
+    font-size: 12px;
+    text-align: right;
+  }
+
+  .school-bar .container {
+    min-height: 28px;
+  }
+
+  .brand img {
+    width: 37px;
+    height: 37px;
+  }
+
+  .brand > span {
+    font-size: 13px;
+  }
+
+  .brand small {
+    font-size: 11px;
+  }
+
+  .header-tools {
+    gap: 5px;
+  }
+
+  .theme-toggle {
+    width: 30px;
+    height: 32px;
+  }
+
+  .menu {
+    padding: 2px 5px;
+    border: 0;
+    background: none;
+    font-size: 20px;
+  }
+
+  /* --- Нүүр хэсэг --- */
+
+  .hero-link {
+    gap: 9px;
+    font-size: 13px;
+  }
+
+  .hero-photo {
+    top: auto;
+    right: 18px;
+    bottom: 56px;
+    width: calc(100% - 36px);
+    height: 255px;
+  }
+
+  .hero-content {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 26px;
+    width: calc(100% - 24px);
+    margin-bottom: 18px;
+    padding: 27px 20px 20px;
+    border-radius: 22px;
+  }
+
+  .hero-copy {
+    max-width: none;
+  }
+
+  .hero .eyebrow {
+    margin-bottom: 22px;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+  }
+
+  .hero h1 {
+    font-size: clamp(44px, 12vw, 70px);
+    line-height: 1.02;
+    letter-spacing: -0.04em;
+  }
+
+  .hero-lead {
+    max-width: 100%;
+    margin-top: 22px;
+    line-height: 1.8;
+  }
+
+  .hero .actions {
+    flex-direction: row;
+    align-items: center;
+    gap: 14px;
+    margin-top: 23px;
+  }
+
+  .hero .button {
+    gap: 16px;
+    padding: 12px 17px;
+    font-size: 13px;
+  }
+
+  .hero-note {
+    display: none;
+  }
+
+  .hero .hero-photo {
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .visual-top {
+    top: 20px;
+    right: 21px;
+    left: 21px;
+    font-size: 11px;
+  }
+
+  .visual-caption {
+    bottom: 23px;
+    left: 22px;
+  }
+
+  .visual-caption small {
+    font-size: 11px;
+  }
+
+  .hero {
+    padding-top: 14px;
+  }
+
+  .hero-visual {
+    min-height: 300px;
+    border-radius: 14px;
+  }
+
+  .hero-courses {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .hero-course {
+    grid-template-columns: 1fr 35px;
+    padding: 16px 18px;
+  }
+
+  .hero-course strong {
+    font-size: 15px;
+  }
+
+  .hero-course small {
+    font-size: 12px;
+  }
+
+  .hero-course > span {
+    font-size: 33px;
+  }
+
+  .hero-course:first-child {
+    border-top: 1px solid var(--line);
+    border-left: 3px solid #244de9;
+    border-left-color: #edda48;
+  }
+
+  .hero-course:nth-child(2) {
+    border-top: 1px solid var(--line);
+    border-left: 3px solid #244de9;
+    border-left-color: #84a4ff;
+  }
+
+  .hero-course:nth-child(3) {
+    border-top: 1px solid var(--line);
+    border-left: 3px solid #244de9;
+  }
+
+  .visual-caption span {
+    font-size: 25px;
+  }
+
+  /* --- Товч мэдээллийн мөр --- */
+
+  .quick-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 23px 15px;
+    padding-block: 24px;
+  }
+
+  .quick-grid > div,
+  .quick-grid > a {
+    padding-left: 0;
+    border: 0;
+  }
+
+  .quick-icon {
+    font-size: 23px;
+  }
+
+  /* --- Шатрын ач тус --- */
+
+  .benefits-grid {
+    grid-template-columns: 1fr;
+    gap: 25px;
+  }
+
+  .benefits-grid article {
+    display: grid;
+    grid-template-columns: 70px 1fr;
+    gap: 0 16px;
+    padding-top: 22px;
+  }
+
+  .benefit-icon {
+    grid-row: 1/3;
+    width: 70px;
+    height: 78px;
+    margin: 0;
+    font-size: 28px;
+  }
+
+  .benefits-grid h3 {
+    margin-bottom: 10px;
+    font-size: 19px;
+  }
+
+  .benefits-grid p {
+    grid-column: 2;
+  }
+
+  .benefit-note {
+    display: block;
+    margin-top: 30px;
+    padding-top: 25px;
+  }
+
+  .benefit-note p {
+    margin-top: 10px;
+    font-size: 13px;
+  }
+
+  .benefit-icon img {
+    width: 65px;
+    height: 65px;
+  }
+
+  /* --- Сургалтын хөтөлбөр --- */
+
+  .program-tabs {
+    justify-content: space-between;
+  }
+
+  .program-tabs button span {
+    display: block;
+    margin: 0 0 5px;
+    font-size: 11px;
+  }
+
+  .program-overview > p:not(.eyebrow) {
+    max-width: 260px;
+  }
+
+  .program-piece {
+    top: 20px;
+    right: 16px;
+    font-size: 140px;
+  }
+
+  .program-foot {
+    display: block;
+    padding-top: 20px;
+    line-height: 1.8;
+  }
+
+  .program-overview .eyebrow {
+    font-size: 11px;
+  }
+
+  .program-tabs button {
+    padding: 14px 6px;
+    font-size: 13px;
+  }
+
+  .program-panel {
+    display: block;
+    margin-top: 15px;
+  }
+
+  .program-overview {
+    padding: 24px 0;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .program-foot a {
+    display: inline-block;
+    margin-top: 12px;
+  }
+
+  /* --- Багш нар --- */
+
+  .coach-duty {
+    min-height: 0;
+  }
+
+  .team-grid {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+
+  .coach-photo {
+    height: auto;
+    aspect-ratio: 1/1.05;
+    border-radius: 14px;
+  }
+
+  .coach-body {
+    padding-top: 22px;
+  }
+
+  .coach .coach-name {
+    font-size: 25px;
+  }
+
+  .coach .eyebrow {
+    font-size: 11px;
+  }
+
+  .coach ul {
+    margin-block: 16px;
+    font-size: 14px;
+  }
+
+  .coach-highlight {
+    font-size: 14px;
+  }
+
+  /* --- Хичээлийн хуваарь ба төлбөр --- */
+
+  .schedule-grid {
+    display: block;
+    grid-template-columns: 1fr;
+  }
+
+  .slot-top {
+    flex-direction: row;
+    font-size: 11px;
+  }
+
+  .slot h3 span {
+    margin: 0 5px;
+    font-size: 24px;
+  }
+
+  .slot,
+  .slot.featured,
+  .slot:first-child {
+    padding: 25px 0;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .slot:last-child {
+    border: 0;
+  }
+
+  .slot h3 {
+    margin-top: 18px;
+    font-size: 39px;
+  }
+
+  .slot p {
+    min-height: 0;
+    margin-top: 8px;
+  }
+
+  .slot a {
+    margin-top: 15px;
+    padding-top: 0;
+  }
+
+  .fee-banner {
+    display: block;
+    margin-top: 24px;
+    padding: 24px;
+  }
+
+  .fee-banner strong {
+    display: block;
+    margin: 5px 0 12px;
+    font-size: 38px;
+  }
+
+  .fee-banner p,
+  .schedule-note {
+    font-size: 12px;
+  }
+
+  /* --- Шатрын бодлого --- */
+
+  .practice-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .practice-copy > p:not(.eyebrow) {
+    margin-top: 20px;
+    font-size: 14px;
+  }
+
+  .puzzle-shell {
+    width: 100%;
+    max-width: 440px;
+    margin: auto;
+    padding: 19px 14px;
+    border-radius: 14px;
+  }
+
+  .square {
+    font-size: 34px;
+  }
+
+  .practice h2 {
+    font-size: 39px;
+  }
+
+  .practice-copy p.practice-instruction {
+    font-size: 12px;
+  }
+
+  .puzzle-task h3 {
+    font-size: 21px;
+  }
+
+  .board-heading strong {
+    font-size: 15px;
+  }
+
+  .puzzle-message {
+    min-height: 90px;
+    padding: 12px;
+    font-size: 12px;
+  }
+
+  .puzzle-turn small {
+    font-size: 12px;
+  }
+
+  .board {
+    border-width: 3px;
+  }
+
+  /* --- Түвшин сонгох --- */
+
+  .level-layout {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .level-result,
+  .level-layout .section-intro {
+    font-size: 14px;
+  }
+
+  .level-card label {
+    padding: 19px 10px;
+    font-size: 14px;
+  }
+
+  /* --- Тамирчны замнал --- */
+
+  .athlete-path {
+    grid-template-columns: 1fr;
+    gap: 25px;
+  }
+
+  .athlete-path article {
+    display: grid;
+    grid-template-columns: 38px 1fr;
+    gap: 0 18px;
+  }
+
+  .athlete-path article > span {
+    grid-row: 1/3;
+    margin: 0;
+    font-size: 31px;
+  }
+
+  .athlete-path .step-title {
+    font-size: 20px;
+  }
+
+  .athlete-path p {
+    grid-column: 2;
+  }
+
+  .athlete-callout {
+    padding-top: 28px;
+  }
+
+  .athlete-callout .callout-title {
+    font-size: 29px;
+  }
+
+  /* --- Тамирчдын амжилт --- */
+
+  .achievement-list {
+    grid-template-columns: 1fr;
+  }
+
+  .achievements-empty {
+    align-items: flex-start;
+    gap: 18px;
+    padding: 23px 0;
+  }
+
+  .achievements-empty > span {
+    font-size: 40px;
+  }
+
+  .achievements-empty h3 {
+    font-size: 18px;
+  }
+
+  .achievements-empty p {
+    font-size: 13px;
+  }
+
+  /* --- Түгээмэл асуулт --- */
+
+  .faq-layout {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  summary {
+    padding-block: 20px;
+    font-size: 14px;
+  }
+
+  /* --- Холбоо барих --- */
+
+  .contact-layout {
+    grid-template-columns: 1fr;
+    gap: 33px;
+  }
+
+  .contact-phone {
+    gap: 25px;
+    margin-top: 23px;
+  }
+
+  .contact .actions {
+    gap: 10px;
+  }
+
+  .contact {
+    padding-block: 55px;
+  }
+
+  .contact-layout > div > p:not(.eyebrow):not(.contact-small) {
+    font-size: 14px;
+  }
+
+  .contact-card {
+    padding: 30px 0 0;
+    border-top: 1px solid #5871b3;
+    border-left: 0;
+  }
+
+  .contact-card .card-title {
+    font-size: 28px;
+  }
+
+  /* --- Хөл хэсэг --- */
+
+  .footer-top {
+    flex-wrap: wrap;
+    padding-block: 30px;
+  }
+
+  .footer-bottom {
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 11px;
+  }
+
+  .footer-top p,
+  .footer-top > a:last-child {
+    font-size: 12px;
+  }
+}
+
+/* ==========================================================================
+   Жижиг гар утас (370px хүртэл)
+   ========================================================================== */
+
+@media (max-width: 370px) {
+  /* --- Суурь тохиргоо --- */
+
+  h2 {
+    font-size: 35px;
+  }
+
+  /* --- Сургуулийн мөр ба толгой хэсэг --- */
+
+  .brand > span {
+    font-size: 13px;
+  }
+
+  /* --- Нүүр хэсэг --- */
+
+  .hero .button {
+    padding: 12px;
+  }
+
+  /* --- Товч мэдээллийн мөр --- */
+
+  .quick-grid strong {
+    font-size: 12px;
+  }
+
+  /* --- Шатрын бодлого --- */
+
+  .square {
+    font-size: 28px;
+  }
+
+  .practice h2 {
+    font-size: 35px;
+  }
+
+  /* --- Холбоо барих --- */
+
+  .contact h2 {
+    font-size: 35px;
+  }
+}
+
+/* ==========================================================================
+   Хөдөлгөөн багасгах тохиргоотой хэрэглэгч
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  /* --- Суурь тохиргоо --- */
+
+  *,
+  *:before,
+  *:after {
+    transition: none !important;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+
+  /* --- Нийтлэг хэрэгслүүд: контейнер, гарчиг, товч --- */
+
+  .button {
+    transition: none;
+  }
+
+  .button:hover {
+    transform: none;
+  }
+
+  /* --- Нүүр хэсэг --- */
+
+  .hero-course {
+    transition: none;
+  }
+
+  .hero-course:hover {
+    transform: none;
+  }
+
+  /* --- Шатрын ач тус --- */
+
+  .benefit-icon img {
+    transition: none;
+  }
+
+  .benefits-grid article:hover .benefit-icon img {
+    transform: none;
+  }
+
+  /* --- Багш нар --- */
+
+  .coach-photo img {
+    transition: none;
+  }
+
+  .coach:hover .coach-photo img {
+    transform: none;
+  }
+
+  /* --- Шатрын бодлого --- */
+
+  .board .square,
+  .board .square img {
+    transition: none;
+  }
+}
+
+/* ==========================================================================
+   Олон хуудастай бүтэц: нийтлэг хэсгүүд
+   ========================================================================== */
+
+/* Түвшин нь өөрчлөгдсөн ч өмнөх h3 шиг харагдах гарчиг */
+.as-h3 {
+  font-family: var(--font);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+}
+
+/* Дэд хуудасны гол гарчиг (h1) нь нүүр хуудасны h2-той ижил хэмжээтэй */
+.page-title {
+  font-size: clamp(38px, 4.1vw, 58px);
+}
+
+.page-title span,
+.section-heading h1 > span {
+  color: var(--blue);
+}
+
+.contact .page-title span {
+  color: #f3dc56;
+}
+
+main:focus {
+  outline: none;
+}
+
+/* Нээлттэй байгаа хуудсыг цэсэнд ялгах */
+.header nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  border-bottom: 2px solid transparent;
+}
+
+.header nav a[aria-current='page'] {
+  border-bottom-color: var(--blue);
+  color: var(--blue);
+  font-weight: 700;
+}
+
+.menu,
+.theme-toggle {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.theme-toggle {
+  display: grid;
+  place-items: center;
+  padding: 0;
+}
+
+/* Дан бичвэр холбоосууд хуруугаар дарахад хангалттай өндөртэй байна */
+.text-link,
+.slot a,
+.program-foot a,
+.schedule-note a,
+.hero-link,
+.school-bar a,
+.footer-bottom a,
+.footer-nav a,
+.footer-contact a,
+.contact-detail a,
+.level-result a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+.schedule-note a,
+.footer-bottom a,
+.contact-detail a,
+.level-result a,
+.data-status a,
+.board-fallback a {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.school-bar .container {
+  gap: 16px;
+}
+
+.brand {
+  min-height: 44px;
+}
+
+.footer-nav a,
+.footer-bottom a {
+  min-width: 44px;
+}
+
+.copy-contact {
+  min-height: 44px;
+  padding: 10px 0;
+  font-size: 13px;
+}
+
+/* --- Хөл хэсэг --- */
+
+.footer-top {
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.footer-nav ul,
+.footer-contact {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.footer-nav a[aria-current='page'] {
+  color: var(--blue);
+  font-weight: 700;
+}
+
+.footer-nav a:hover,
+.footer-contact a:hover,
+.footer-bottom a:hover {
+  color: var(--blue);
+}
+
+.footer-bottom {
+  gap: 20px;
+}
+
+.footer-bottom span {
+  margin-right: auto;
+}
+
+/* --- Нүүр хуудас: бусад хуудас руу чиглүүлэх картууд --- */
+
+.page-links {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.page-links a {
+  display: grid;
+  gap: 10px;
+  height: 100%;
+  padding: 26px 24px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  transition:
+    border-color 0.2s,
+    transform 0.2s;
+}
+
+.page-links a:hover {
+  border-color: var(--blue);
+  transform: translateY(-3px);
+}
+
+.page-links span {
+  color: var(--blue);
+  font:
+    34px/1 Georgia,
+    serif;
+}
+
+.page-links strong {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.page-links small {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* --- Уриалгын зурвас --- */
+
+.cta-band {
+  padding-block: 64px;
+  background: #142d83;
+  color: #f6f5ee;
+}
+
+.cta-band .container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 28px;
+}
+
+.cta-band h2 {
+  color: #fff;
+  font-size: clamp(30px, 3vw, 42px);
+}
+
+.cta-band p {
+  max-width: 520px;
+  margin-top: 14px;
+  color: #d9e4ff;
+  font-size: 15px;
+}
+
+.cta-band .actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.cta-band .gold {
+  background: #fff;
+  color: #244de9;
+}
+
+.cta-band .outline-light {
+  border: 1px solid #8199df;
+  color: #fff;
+}
+
+/* ==========================================================================
+   Сургалтын түвшин: JavaScript-гүй үед нээгдэж хаагддаг жагсаалт
+   ========================================================================== */
+
+.program-level {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.program-level + .program-level {
+  margin-top: 12px;
+}
+
+.program-level > summary {
+  padding: 20px 52px 20px 22px;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.program-level > summary span {
+  margin-right: 14px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.program-level > summary:after {
+  top: 16px;
+  right: 20px;
+}
+
+.program-level > .program-panel {
+  margin-top: 0;
+  padding: 0 22px 22px;
+}
+
+/* JavaScript табуудыг үүсгэсний дараа: самбар нь фокус авч чадна */
+.program-panel[role='tabpanel']:focus-visible {
+  outline: 3px solid #d5ad40;
+  outline-offset: 4px;
+}
+
+.program-tabs button {
+  min-height: 48px;
+}
+
+/* ==========================================================================
+   Шатрын бодлого: өнгөний ялгарал, жижиг дэлгэц
+   ========================================================================== */
+
+.puzzle-eyebrow,
+.puzzle-turn small {
+  color: #566786;
+}
+
+.ranks,
+.files {
+  color: #566786;
+}
+
+.puzzle-bottom > span {
+  color: #566786;
+}
+
+.puzzle-bottom button {
+  min-height: 44px;
+  padding-inline: 16px;
+}
+
+.puzzle-bottom button:disabled {
+  color: #56657f;
+}
+
+.practice .plain-light {
+  min-height: 44px;
+  padding-inline: 12px;
+}
+
+/* Дүрмийн дагуу боловч мат биш нүүдлийн тайлбар */
+.puzzle-message.notice {
+  border-color: #c9d6f4;
+  background: #eef3ff;
+  color: #27407d;
+}
+
+.board .square.check {
+  box-shadow: inset 0 0 0 3px #c2410c;
+}
+
+.board-fallback {
+  grid-column: 2;
+  padding: 14px;
+  border: 1px dashed #c9d6f4;
+  border-radius: 10px;
+  color: #435879;
+  font-size: 14px;
+}
+
+/* ==========================================================================
+   Тамирчид, амжилт (athletes.html)
+   ========================================================================== */
+
+.data-status {
+  margin-bottom: 20px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.data-status:empty {
+  display: none;
+}
+
+.athlete-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.athlete-card {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 18px;
+  align-content: start;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.athlete-photo {
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--soft);
+  color: var(--blue);
+  font:
+    44px/1 Georgia,
+    serif;
+}
+
+.athlete-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.athlete-card h3 {
+  font-size: 18px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.athlete-meta {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.athlete-ranks {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: auto 1fr;
+  gap: 6px 14px;
+  margin: 0;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+}
+
+.athlete-ranks dt {
+  color: var(--muted);
+}
+
+.athlete-ranks dd {
+  margin: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.athlete-results {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 14px 0 0 18px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.athlete-results strong {
+  color: var(--ink);
+}
+
+.achievement-card h3 {
+  overflow-wrap: anywhere;
+}
+
+/* ==========================================================================
+   Олон хуудастай бүтэц: дэлгэцийн хэмжээ
+   ========================================================================== */
+
+@media (max-width: 1100px) {
+  .page-links {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .athlete-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  /* Гар утасны цэс: холбоос бүр бүтэн мөр, 44px-ээс өндөр */
+  .js .header nav.open,
+  html:not(.js) .header nav {
+    display: grid;
+    flex: 0 0 100%;
+    order: 4;
+    width: 100%;
+    padding: 8px 0 4px;
+    border-top: 1px solid var(--line);
+  }
+
+  .header nav a {
+    display: flex;
+    min-height: 48px;
+    border-bottom: 1px solid var(--line);
+    font-size: 15px;
+  }
+
+  .header nav a:last-child {
+    border-bottom: 0;
+  }
+
+  .header nav a[aria-current='page'] {
+    border-bottom-color: var(--line);
+  }
+
+  /* Таблет дээр тайлбар дээр, хөлөг доор байрлаж, хөлөг боломжит өргөнийг ашиглана */
+  .practice-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .puzzle-shell {
+    width: 100%;
+    max-width: 560px;
+    margin-inline: auto;
+  }
+
+  /* JavaScript-гүй үед цэс үргэлж нээлттэй тул нээх товч хэрэггүй */
+  html:not(.js) .menu {
+    display: none;
+  }
+
+  .menu {
+    padding: 0;
+  }
+}
+
+@media (max-width: 650px) {
+  .page-title {
+    font-size: 39px;
+    line-height: 1.1;
+  }
+
+  .school-bar .container {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0 14px;
+    padding-block: 6px;
+    text-align: center;
+  }
+
+  .school-bar span,
+  .school-bar a {
+    max-width: none;
+    line-height: 1.5;
+  }
+
+  .school-bar a {
+    min-height: 44px;
+  }
+
+  .menu,
+  .theme-toggle {
+    width: 44px;
+    height: 44px;
+  }
+
+  .page-links,
+  .athlete-list {
+    grid-template-columns: 1fr;
+  }
+
+  .cta-band {
+    padding-block: 48px;
+  }
+
+  .cta-band .actions,
+  .cta-band .button {
+    width: 100%;
+  }
+
+  .cta-band .button {
+    justify-content: center;
+    min-height: 48px;
+  }
+
+  .footer-top {
+    display: grid;
+    gap: 22px;
+  }
+
+  .footer-bottom {
+    flex-wrap: wrap;
+    gap: 4px 20px;
+  }
+
+  .footer-bottom span {
+    flex-basis: 100%;
+  }
+
+  .program-level > .program-panel {
+    padding: 0 16px 18px;
+  }
+
+  /* Хөлөг дэлгэцийн өргөнийг аль болох бүрэн ашиглаж, нүд томорно */
+  .puzzle-shell {
+    padding-inline: 12px;
+  }
+
+  .board-frame {
+    grid-template-columns: 10px 1fr;
+    gap: 4px;
+  }
+
+  .board {
+    border-width: 2px;
+  }
+}
+
+@media (max-width: 370px) {
+  .page-title {
+    font-size: 35px;
+  }
+
+  /* Хамгийн жижиг утсан дээр хөлгийн нүд аль болох том байна */
+  .puzzle-shell {
+    padding-inline: 6px;
+  }
+
+  .ranks {
+    display: none;
+  }
+
+  .board-frame {
+    grid-template-columns: 1fr;
+  }
+
+  .files,
+  .board-fallback {
+    grid-column: 1;
+  }
+
+  .athlete-card {
+    grid-template-columns: 72px 1fr;
+  }
+
+  .athlete-photo {
+    width: 72px;
+    height: 72px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-links a {
+    transition: none;
+  }
+
+  .page-links a:hover {
+    transform: none;
+  }
+}

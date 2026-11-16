@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="mn">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#244de9" />
+    <title>Сургалт: түвшин, хуваарь, төлбөр | 14 дүгээр сургуулийн шатрын клуб</title>
+    <meta
+      name="description"
+      content="Шатрын сургалтын гурван түвшин, Бямба Ням гарагийн хуваарь, сарын төлбөр, түвшин баримжаалах хэрэгсэл болон нэг нүүдлийн матын бодлого."
+    />
+    <link rel="icon" type="image/svg+xml" href="assets/club-logo.svg" />
+
+    <!-- Загвар -->
+    <link rel="stylesheet" href="css/style.css" />
+
+    <!-- Өнгөний горимыг хуудас зурагдахаас өмнө тохируулна -->
+    <script src="js/theme.js"></script>
+
+    <!-- Хуудасны үйлдлүүд -->
+    <script src="js/site-config.js" defer></script>
+    <script src="js/common.js" defer></script>
+    <script src="js/program-tabs.js" defer></script>
+    <script src="js/chess-rules.js" defer></script>
+    <script src="js/puzzle-data.js" defer></script>
+    <script src="js/puzzle.js" defer></script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Үндсэн агуулга руу шилжих</a>
+
+    <!-- Сургуулийн мөр ба толгой хэсэг (бүх хуудсанд ижил) -->
+    <div class="school-bar">
+      <div class="container">
+        <span>НИЙСЛЭЛИЙН ЕРӨНХИЙ БОЛОВСРОЛЫН 14 ДҮГЭЭР СУРГУУЛЬ</span>
+        <a href="https://14school.mn/" target="_blank" rel="noopener" data-club-href="schoolUrl">
+          Сургуулийн цахим хуудас ↗
+        </a>
+      </div>
+    </div>
+    <header class="header">
+      <div class="container header-inner">
+        <a class="brand" href="index.html" aria-label="Шатрын клуб — Нүүр хуудас">
+          <img src="assets/club-logo.svg" width="56" height="56" alt="" />
+          <span>
+            ШАТРЫН КЛУБ
+            <small>Мэдлэг. Хөдөлмөр. Дэвшил.</small>
+          </span>
+        </a>
+        <button
+          id="menu"
+          class="menu"
+          type="button"
+          aria-expanded="false"
+          aria-controls="nav"
+          aria-label="Үндсэн цэс нээх"
+        >
+          <span aria-hidden="true">☰</span>
+        </button>
+        <nav id="nav" aria-label="Үндсэн цэс">
+          <a href="index.html">Нүүр</a>
+          <a href="training.html" aria-current="page">Сургалт</a>
+          <a href="coaches.html">Багш нар</a>
+          <a href="athletes.html">Тамирчид</a>
+          <a href="contact.html">Холбоо барих</a>
+        </nav>
+        <div class="header-tools">
+          <button
+            class="theme-toggle"
+            type="button"
+            aria-label="Харанхуй горимд шилжих"
+            aria-pressed="false"
+          >
+            <span aria-hidden="true">☾</span>
+          </button>
+        </div>
+      </div>
+    </header>
+    <main id="main" tabindex="-1">
+      <!-- Сургалтын түвшин ба хөтөлбөр -->
+      <section id="program" class="program section">
+        <div class="container">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">СУРГАЛТЫН ХӨТӨЛБӨР</p>
+              <h1 class="page-title">
+                Хүүхэд бүрд
+                <br />
+                <span>тохирох эхлэл бий.</span>
+              </h1>
+            </div>
+            <p class="section-intro">
+              Наснаас гадна одоогийн мэдлэг, тоглох дадал, суралцах онцлогийг харгалзана. Аль
+              түвшнээс эхлэхийг багштай зөвлөлдөн шийдээрэй.
+            </p>
+          </div>
+          <!--
+            JavaScript-гүй үед доорх гурван түвшин нээгдэж хаагддаг жагсаалт (details) хэлбэрээр харагдана.
+            JavaScript ажиллахад js/program-tabs.js тэдгээрийг таб болгон хувиргана.
+          -->
+          <div class="program-levels" id="program-levels" data-label="Сургалтын түвшин">
+            <details
+              class="program-level"
+              name="program-level"
+              id="level-beginner"
+              data-level="beginner"
+              open
+            >
+              <summary>
+                <span>01</span>
+                Анхан шат
+              </summary>
+              <div class="program-panel">
+                <div class="program-overview">
+                  <span class="program-piece" aria-hidden="true">♙</span>
+                  <p class="eyebrow">АНХНЫ НҮҮДЛЭЭС ЭХЭЛНЭ</p>
+                  <h2 class="program-title as-h3">
+                    Шатрын сууриа
+                    <br />
+                    зөв тавья.
+                  </h2>
+                  <p>Шатар огт мэдэхгүй эсвэл дүрсүүдийн нүүдлийг дөнгөж сурч буй хүүхдэд.</p>
+                  <a class="text-link" href="contact.html">Энэ түвшний талаар лавлах ↗</a>
+                </div>
+                <div class="program-detail">
+                  <h3 class="program-subtitle">Юу сурах вэ?</h3>
+                  <ul class="check-list">
+                    <li>Хөлгийн байрлал, нүдний нэр, дүрсүүдийн нүүдэл</li>
+                    <li>Шах, мат, патын ялгаа; дүрмийн дагуу тоглох</li>
+                    <li>Сэлгээ, хүү хувирах, замд авах нүүдэл</li>
+                    <li>Дүрсээ хамгаалах, энгийн матын бодлого бодох</li>
+                  </ul>
+                  <div class="learning-result">
+                    <span>ЭЗЭМШИХ ЧАДВАР</span>
+                    <p>
+                      Дүрмийн дагуу өрөг тоглож, ноёнгоо хамгаалж, нэг нүүдлийн мат олох суурь
+                      чадвар.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </details>
+            <details
+              class="program-level"
+              name="program-level"
+              id="level-foundation"
+              data-level="foundation"
+            >
+              <summary>
+                <span>02</span>
+                Суурь бататгах
+              </summary>
+              <div class="program-panel">
+                <div class="program-overview">
+                  <span class="program-piece" aria-hidden="true">♘</span>
+                  <p class="eyebrow">МЭДЛЭГЭЭ ДАДАЛ БОЛГОНО</p>
+                  <h2 class="program-title as-h3">
+                    Нүүдлийн цаадах
+                    <br />
+                    санааг ойлгоё.
+                  </h2>
+                  <p>
+                    Дүрмээ мэддэг, бүтэн өрөг тоглодог боловч тооцоолол, төлөвлөгөөгөө сайжруулах
+                    шаардлагатай хүүхдэд.
+                  </p>
+                  <a class="text-link" href="contact.html">Энэ түвшний талаар лавлах ↗</a>
+                </div>
+                <div class="program-detail">
+                  <h3 class="program-subtitle">Юу сурах вэ?</h3>
+                  <ul class="check-list">
+                    <li>Давхар довтолгоо, дараа, нээж довтлох тактик</li>
+                    <li>Төвийн төлөө тоглох, дүрсээ хөгжүүлэх, ноёны аюулгүй байдал</li>
+                    <li>Ноён, хүүний төгсгөлийн суурь ойлголт</li>
+                    <li>Өргөө тэмдэглэх, цагаа хуваарилах, алдаагаа тайлбарлах</li>
+                  </ul>
+                  <div class="learning-result">
+                    <span>ЭЗЭМШИХ ЧАДВАР</span>
+                    <p>
+                      Өрсөлдөгчийн заналхийллийг шалгаж, боломжит нүүдлүүдийг харьцуулан, энгийн
+                      төлөвлөгөөтэй тоглох чадвар.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </details>
+            <details
+              class="program-level"
+              name="program-level"
+              id="level-competition"
+              data-level="competition"
+            >
+              <summary>
+                <span>03</span>
+                Тэмцээний бэлтгэл
+              </summary>
+              <div class="program-panel">
+                <div class="program-overview">
+                  <span class="program-piece" aria-hidden="true">♕</span>
+                  <p class="eyebrow">ЗОРИЛГОТОЙ БЭЛТГЭЛ</p>
+                  <h2 class="program-title as-h3">
+                    Тэмцээнд
+                    <br />
+                    бэлтгэлтэй оръё.
+                  </h2>
+                  <p>
+                    Тэмцээнд оролцдог эсвэл тоглолтоо ахисан түвшинд хөгжүүлэх зорилготой сурагчдад.
+                  </p>
+                  <a class="text-link" href="contact.html">Энэ түвшний талаар лавлах ↗</a>
+                </div>
+                <div class="program-detail">
+                  <h3 class="program-subtitle">Юунд төвлөрөх вэ?</h3>
+                  <ul class="check-list">
+                    <li>Хувилбарыг гүнзгий тооцох, байрлалыг үнэлэх</li>
+                    <li>Өөрийн тоглолтод тохирох гарааны сан бүрдүүлэх</li>
+                    <li>Дунд үеийн төлөвлөгөө, практик төгсгөлийн бэлтгэл</li>
+                    <li>Тэмцээний өргийн шинжилгээ, цаг ашиглалт, сэтгэлзүйн бэлтгэл</li>
+                  </ul>
+                  <div class="learning-result">
+                    <span>БЭЛТГЭЛИЙН ЧИГЛЭЛ</span>
+                    <p>
+                      Өөрийн давуу болон сайжруулах шаардлагатай талаа мэдэж, дараагийн тэмцээнд
+                      тодорхой зорилготой бэлтгэх.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </details>
+          </div>
+          <div class="program-foot">
+            <span>Түвшин ахихыг зөвхөн суралцсан хугацаагаар бус, эзэмшсэн чадвараар үнэлнэ.</span>
+            <a href="#level-check">Түвшнээ баримжаалах →</a>
+          </div>
+        </div>
+      </section>
+      <!-- Сургалтын түвшин баримжаалах -->
+      <section id="level-check" class="section container level-layout">
+        <div>
+          <p class="eyebrow">ХААНААС ЭХЛЭХЭЭ МЭДЭХГҮЙ БАЙНА УУ?</p>
+          <h2>
+            Тохирох түвшнээ
+            <br />
+            <span>баримжаалаарай.</span>
+          </h2>
+          <p class="section-intro">
+            Хүүхдийн одоогийн чадварт хамгийн ойр тайлбарыг сонгоорой. Энэ нь шалгалт биш; эцсийн
+            хуваарилалтыг багштай ярилцаж шийднэ.
+          </p>
+        </div>
+        <div class="level-card">
+          <fieldset>
+            <legend>Хүүхэд тань одоогоор…</legend>
+            <label>
+              <input type="radio" name="level" value="beginner" />
+              <span>Шатар тоглож сураагүй, эсвэл нүүдлээ дөнгөж сурч байгаа.</span>
+            </label>
+            <label>
+              <input type="radio" name="level" value="foundation" />
+              <span>Дүрмээ мэддэг, бүтэн өрөг тоглодог. Илүү сайн бодож тогломоор байна.</span>
+            </label>
+            <label>
+              <input type="radio" name="level" value="competition" />
+              <span>Тэмцээнд тоглодог, тооцоолол болон бэлтгэлээ гүнзгийрүүлэхийг хүсдэг.</span>
+            </label>
+          </fieldset>
+          <div id="level-result" class="level-result" role="status">
+            <p>Нэг тайлбар сонговол тохирох сургалтын чиглэл гарна.</p>
+          </div>
+          <noscript>
+            <p class="level-result">
+              Эхний тайлбар —
+              <a href="#level-beginner">Анхан шат</a>
+              , хоёр дахь —
+              <a href="#level-foundation">Суурь бататгах</a>
+              , гурав дахь —
+              <a href="#level-competition">Тэмцээний бэлтгэл</a>
+              .
+            </p>
+          </noscript>
+        </div>
+      </section>
+
+      <!-- Хуваарь болон төлбөр -->
+      <section id="schedule" class="section container">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">ХИЧЭЭЛИЙН ХУВААРЬ</p>
+            <h2>
+              Амралтын өдрийг
+              <br />
+              <span>өсөж хөгжих цаг болгоё.</span>
+            </h2>
+          </div>
+          <p class="section-intro">
+            Бямба, Ням гарагт 14 дүгээр сургуулийн байранд хичээллэнэ. Эхний хоёр ээлжийн бүлгийг
+            хүүхдийн түвшинд тохируулан багш хуваарилна.
+          </p>
+        </div>
+        <div class="schedule-grid">
+          <article class="slot">
+            <div class="slot-top">
+              <span>01 / НЭГДҮГЭЭР ЭЭЛЖ</span>
+              <span>90 минут</span>
+            </div>
+            <h3>
+              <span data-club="slot0.start">10:00</span>
+              <span>—</span>
+              <span data-club="slot0.end">11:30</span>
+            </h3>
+            <p>Түвшинд тохирсон бүлгийн сургалт</p>
+            <a href="contact.html">Ээлжийн талаар лавлах ↗</a>
+          </article>
+          <article class="slot">
+            <div class="slot-top">
+              <span>02 / ХОЁРДУГААР ЭЭЛЖ</span>
+              <span>90 минут</span>
+            </div>
+            <h3>
+              <span data-club="slot1.start">12:00</span>
+              <span>—</span>
+              <span data-club="slot1.end">13:30</span>
+            </h3>
+            <p>Түвшинд тохирсон бүлгийн сургалт</p>
+            <a href="contact.html">Ээлжийн талаар лавлах ↗</a>
+          </article>
+          <article class="slot featured">
+            <div class="slot-top">
+              <span>03 / ГУРАВДУГААР ЭЭЛЖ</span>
+              <span>120 минут</span>
+            </div>
+            <h3>
+              <span data-club="slot2.start">14:00</span>
+              <span>—</span>
+              <span data-club="slot2.end">16:00</span>
+            </h3>
+            <p>Гүнзгийрүүлсэн сургалт, тэмцээний бэлтгэл</p>
+            <a href="contact.html">Бэлтгэлийн талаар лавлах ↗</a>
+          </article>
+        </div>
+        <div class="fee-banner">
+          <div>
+            <p>СУРГАЛТЫН САРЫН ТӨЛБӨР</p>
+            <strong>
+              <span data-club="fee">150,000₮</span>
+              <small>/ сар</small>
+            </strong>
+          </div>
+          <a class="text-link" href="contact.html">Бүлэг, ээлжээ сонгох ↗</a>
+        </div>
+        <p class="schedule-note">
+          <span>ⓘ</span>
+          Тохирох ээлж, танхим болон төлбөр төлөх нөхцөлийг
+          <a href="tel:+97680344372" data-club-href="phone">
+            <span data-club="phone">8034-4372</span>
+          </a>
+          дугаараар лавлаарай.
+        </p>
+      </section>
+
+      <!-- Шатрын бодлого -->
+      <section id="practice" class="practice section">
+        <div class="container practice-layout">
+          <div class="practice-copy">
+            <p class="eyebrow light">ХӨЛӨГ ДЭЭР ТУРШААД ҮЗЬЕ</p>
+            <h2>
+              Нэг нүүдэл.
+              <br />
+              <span>Нэг шинэ ойлголт.</span>
+            </h2>
+            <p>
+              Хар ноёны өмнөх хүүнүүд түүнийг хамгаалж байгаа мэт харагдана. Гэхдээ гарах замыг нь
+              хаажээ. Энэ боломжийг хэрхэн ашиглах вэ?
+            </p>
+            <div class="puzzle-task">
+              <span>ДААЛГАВАР</span>
+              <h3>
+                Цагаан нүүнэ.
+                <br />
+                Нэг нүүдлээр мат тавиарай.
+              </h3>
+            </div>
+            <p class="practice-instruction">
+              Цагаан дүрсээ сонгоод очих нүдийг дарна уу. Гарын сумтай товчоор нүд хооронд шилжиж,
+              Enter эсвэл зай авах товчоор сонгоно. Esc товч сонголтыг цуцална.
+            </p>
+            <div class="puzzle-controls">
+              <button id="hint" type="button" class="button outline-light">Санамж авах</button>
+              <button id="reset" type="button" class="plain-light">Дахин эхлэх ↺</button>
+            </div>
+          </div>
+          <div class="puzzle-shell">
+            <div class="board-heading">
+              <div>
+                <span class="puzzle-eyebrow">БОДЛОГЫН БУЛАН</span>
+                <strong id="puzzle-title">Арын эгнээний мат</strong>
+              </div>
+              <span id="puzzle-count" class="puzzle-count">01 / 03</span>
+            </div>
+            <div class="puzzle-turn">
+              <span></span>
+              <strong id="puzzle-turn">Цагаан нүүнэ</strong>
+              <small>Нэг нүүдлээр мат</small>
+            </div>
+            <div class="board-frame">
+              <div class="ranks" aria-hidden="true">
+                <span>8</span>
+                <span>7</span>
+                <span>6</span>
+                <span>5</span>
+                <span>4</span>
+                <span>3</span>
+                <span>2</span>
+                <span>1</span>
+              </div>
+              <div
+                id="board"
+                class="board"
+                role="group"
+                aria-label="Шатрын бодлого: цагаан нүүнэ"
+              ></div>
+              <noscript>
+                <p class="board-fallback">
+                  Хөлөг дээр бодлого бодоход JavaScript шаардлагатай. Эхний бодлогын байрлал: цагаан
+                  — ноён g1, тэрэг e1, хүү f2, g2, h2; хар — ноён g8, хүү a7, b7, f7, g7, h7. Цагаан
+                  нэг нүүдлээр мат тавина.
+                </p>
+              </noscript>
+              <div class="files" aria-hidden="true">
+                <span>a</span>
+                <span>b</span>
+                <span>c</span>
+                <span>d</span>
+                <span>e</span>
+                <span>f</span>
+                <span>g</span>
+                <span>h</span>
+              </div>
+            </div>
+            <p id="puzzle-message" class="puzzle-message" role="status" aria-live="polite">
+              Цагаан нүүнэ. Нэг нүүдлээр мат тавих нүүдлийг олоорой.
+            </p>
+            <div class="puzzle-bottom">
+              <span id="puzzle-progress">Бодсон: 0 / 3</span>
+              <button id="next-puzzle" type="button" disabled>Дараагийн бодлого →</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Хөл хэсэг (бүх хуудсанд ижил) -->
+    <footer>
+      <div class="container footer-top">
+        <a class="brand" href="index.html" aria-label="Шатрын клуб — Нүүр хуудас">
+          <img src="assets/club-logo.svg" width="48" height="48" alt="" />
+          <span>
+            ШАТРЫН КЛУБ
+            <small>14 дүгээр сургууль</small>
+          </span>
+        </a>
+        <p>
+          Мэдлэгийг нүүдэлд.
+          <br />
+          Хичээл зүтгэлийг хөгжилд.
+        </p>
+        <nav class="footer-nav" aria-label="Хөл хэсгийн цэс">
+          <ul>
+            <li><a href="index.html">Нүүр</a></li>
+            <li><a href="training.html" aria-current="page">Сургалт</a></li>
+            <li><a href="coaches.html">Багш нар</a></li>
+            <li><a href="athletes.html">Тамирчид</a></li>
+            <li><a href="contact.html">Холбоо барих</a></li>
+          </ul>
+        </nav>
+        <ul class="footer-contact">
+          <li>
+            <a href="tel:+97680344372" data-club-href="phone">
+              <span>
+                Утас:&nbsp;
+                <span data-club="phone">8034-4372</span>
+              </span>
+            </a>
+          </li>
+          <li>
+            <a href="mailto:14-schoolchessclub@gmail.com" data-club-href="email">
+              <span data-club="email">14-schoolchessclub@gmail.com</span>
+            </a>
+          </li>
+          <li>
+            <a
+              href="https://14school.mn/"
+              target="_blank"
+              rel="noopener"
+              data-club-href="schoolUrl"
+            >
+              Сургуулийн цахим хуудас ↗
+            </a>
+          </li>
+        </ul>
+      </div>
+      <div class="container footer-bottom">
+        <span>© 2026 · 14 дүгээр сургуулийн шатрын клуб</span>
+        <a href="admin.html" rel="nofollow">Админ</a>
+        <a href="#main">Дээш буцах ↑</a>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,387 @@
+<!doctype html>
+<html lang="mn">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#244de9" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Админ | 14 дүгээр сургуулийн шатрын клуб</title>
+    <meta
+      name="description"
+      content="Шатрын клубын админ хэсэг: тамирчдын мэдээлэл, зураг, тэмцээний амжилтыг удирдах."
+    />
+    <link rel="icon" type="image/svg+xml" href="assets/club-logo.svg" />
+
+    <!-- Загвар -->
+    <link rel="stylesheet" href="css/style.css" />
+    <link rel="stylesheet" href="css/admin.css" />
+
+    <!-- Өнгөний горимыг хуудас зурагдахаас өмнө тохируулна -->
+    <script src="js/theme.js"></script>
+
+    <!-- Серверийн тохиргоо ба админы үйлдлүүд -->
+    <script src="js/backend-config.js" defer></script>
+    <script src="js/backend.js" defer></script>
+    <script src="js/admin.js" defer></script>
+  </head>
+  <body class="admin-page">
+    <a class="skip" href="#main">Үндсэн агуулга руу шилжих</a>
+
+    <header class="header">
+      <div class="container header-inner">
+        <a class="brand" href="index.html" aria-label="Шатрын клуб — Нүүр хуудас">
+          <img src="assets/club-logo.svg" width="56" height="56" alt="" />
+          <span>
+            ШАТРЫН КЛУБ
+            <small>Админ хэсэг</small>
+          </span>
+        </a>
+        <div class="header-tools">
+          <a class="admin-back" href="athletes.html">Сайт руу буцах ↗</a>
+          <button
+            class="theme-toggle"
+            type="button"
+            aria-label="Харанхуй горимд шилжих"
+            aria-pressed="false"
+          >
+            <span aria-hidden="true">☾</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main id="main" class="container admin-main" tabindex="-1">
+      <h1 class="page-title">Админ хэсэг</h1>
+
+      <!-- Үйлдлийн үр дүн: амжилт ба алдааг дэлгэц уншигч шууд уншина -->
+      <p id="admin-status" class="admin-status" role="status" aria-live="polite"></p>
+      <p id="admin-error" class="admin-status is-error" role="alert"></p>
+
+      <noscript>
+        <p class="admin-notice">Админ хэсгийг ашиглахад JavaScript шаардлагатай.</p>
+      </noscript>
+
+      <!-- 1. Сервер тохируулаагүй үед -->
+      <section id="setup-view" class="admin-notice" hidden>
+        <h2 class="as-h3">Өгөгдлийн сервер холбогдоогүй байна</h2>
+        <p>
+          Админ хэсэг ажиллахын тулд Supabase төсөл үүсгэж, хаяг болон нийтийн түлхүүрийг
+          <code>js/backend-config.js</code>
+          файлд оруулах шаардлагатай. Алхам бүрийг төслийн хавтсан дахь
+          <code>ADMIN-SETUP.md</code>
+          файлд тайлбарласан.
+        </p>
+      </section>
+
+      <!-- 2. Нэвтрэх -->
+      <section id="login-view" class="admin-card" aria-labelledby="login-title" hidden>
+        <h2 id="login-title" class="as-h3">Нэвтрэх</h2>
+        <form id="login-form" class="admin-form">
+          <label for="login-email">Имэйл</label>
+          <input id="login-email" name="email" type="email" autocomplete="username" required />
+
+          <label for="login-password">Нууц үг</label>
+          <input
+            id="login-password"
+            name="password"
+            type="password"
+            autocomplete="current-password"
+            required
+          />
+
+          <button class="button gold" type="submit">Нэвтрэх</button>
+        </form>
+        <p class="admin-hint">
+          Нэвтрэх эрхийг сервер шалгана. Зөвхөн админы жагсаалтад бүртгэгдсэн хэрэглэгч мэдээлэл
+          өөрчилж чадна.
+        </p>
+      </section>
+
+      <!-- 3. Удирдах самбар -->
+      <div id="app-view" hidden>
+        <div class="admin-bar">
+          <p>
+            Нэвтэрсэн:
+            <strong id="admin-email"></strong>
+          </p>
+          <button id="sign-out" class="admin-button" type="button">Гарах</button>
+        </div>
+
+        <div class="admin-tabs" role="tablist" aria-label="Удирдах хэсэг">
+          <button
+            id="tab-athletes"
+            type="button"
+            role="tab"
+            aria-selected="true"
+            aria-controls="panel-athletes"
+          >
+            Тамирчид
+          </button>
+          <button
+            id="tab-achievements"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            aria-controls="panel-achievements"
+            tabindex="-1"
+          >
+            Тэмцээний амжилт
+          </button>
+        </div>
+
+        <!-- Тамирчид -->
+        <section id="panel-athletes" role="tabpanel" aria-labelledby="tab-athletes">
+          <div class="admin-toolbar">
+            <div class="admin-search">
+              <label for="athlete-search">Тамирчин хайх</label>
+              <input
+                id="athlete-search"
+                type="search"
+                placeholder="Нэр, анги, багшийн нэрээр"
+                autocomplete="off"
+              />
+            </div>
+            <button id="add-athlete" class="button gold" type="button">+ Шинэ тамирчин</button>
+          </div>
+          <p id="athlete-count" class="admin-hint"></p>
+          <ul id="athlete-rows" class="admin-rows"></ul>
+        </section>
+
+        <!-- Тэмцээний амжилт -->
+        <section id="panel-achievements" role="tabpanel" aria-labelledby="tab-achievements" hidden>
+          <div class="admin-toolbar">
+            <div class="admin-search">
+              <label for="achievement-filter">Тамирчнаар шүүх</label>
+              <select id="achievement-filter">
+                <option value="">Бүх тамирчин</option>
+              </select>
+            </div>
+            <button id="add-achievement" class="button gold" type="button">+ Шинэ амжилт</button>
+          </div>
+          <p id="achievement-count" class="admin-hint"></p>
+          <ul id="achievement-rows" class="admin-rows"></ul>
+        </section>
+      </div>
+    </main>
+
+    <!-- Тамирчны бүртгэлийн цонх -->
+    <dialog id="athlete-dialog" class="admin-dialog" aria-labelledby="athlete-dialog-title">
+      <form id="athlete-form" class="admin-form" method="dialog" novalidate>
+        <h2 id="athlete-dialog-title" class="as-h3">Шинэ тамирчин</h2>
+        <p id="athlete-form-error" class="admin-status is-error" role="alert"></p>
+
+        <label for="athlete-name">
+          Овог нэр
+          <span class="required">(заавал)</span>
+        </label>
+        <input id="athlete-name" name="full_name" type="text" maxlength="120" required />
+
+        <div class="admin-grid">
+          <div>
+            <label for="athlete-grade">Сурч буй анги</label>
+            <input
+              id="athlete-grade"
+              name="grade"
+              type="text"
+              maxlength="40"
+              placeholder="Жишээ: 7а"
+            />
+          </div>
+          <div>
+            <label for="athlete-teacher">Анги хариуцсан багшийн нэр</label>
+            <input id="athlete-teacher" name="class_teacher" type="text" maxlength="120" />
+          </div>
+        </div>
+
+        <fieldset>
+          <legend>Цол, чансаа</legend>
+          <p class="admin-hint">Байхгүй эсвэл хараахан аваагүй талбарыг хоосон үлдээнэ.</p>
+          <div class="admin-grid">
+            <div>
+              <label for="athlete-national-title">Дотоодын цол</label>
+              <input id="athlete-national-title" name="national_title" type="text" maxlength="80" />
+            </div>
+            <div>
+              <label for="athlete-national-rating">Дотоодын чансаа</label>
+              <input
+                id="athlete-national-rating"
+                name="national_rating"
+                type="number"
+                inputmode="numeric"
+                min="0"
+                max="4000"
+                step="1"
+              />
+            </div>
+            <div>
+              <label for="athlete-intl-title">Олон улсын цол</label>
+              <input id="athlete-intl-title" name="intl_title" type="text" maxlength="80" />
+            </div>
+            <div>
+              <label for="athlete-intl-rating">Олон улсын чансаа</label>
+              <input
+                id="athlete-intl-rating"
+                name="intl_rating"
+                type="number"
+                inputmode="numeric"
+                min="0"
+                max="4000"
+                step="1"
+              />
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Тамирчны зураг</legend>
+          <div class="photo-field">
+            <div id="photo-preview" class="photo-preview">
+              <span aria-hidden="true">♟</span>
+            </div>
+            <div>
+              <label for="athlete-photo" class="admin-button">Зураг сонгох</label>
+              <input
+                id="athlete-photo"
+                class="visually-hidden"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                aria-describedby="photo-rules"
+              />
+              <button id="photo-remove" class="admin-button is-danger" type="button" hidden>
+                Зургийг устгах
+              </button>
+              <p id="photo-rules" class="admin-hint">
+                JPEG, PNG эсвэл WebP зураг, 8 MB хүртэл. Зургийг хадгалахын өмнө автоматаар
+                жижигрүүлнэ.
+              </p>
+              <p id="photo-status" class="admin-hint" role="status"></p>
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>Зөвшөөрөл ба нийтлэл</legend>
+          <p class="admin-hint">
+            Тамирчин насанд хүрээгүй бол эцэг эх, асран хамгаалагчаас зөвшөөрөл авсны дараа л
+            тэмдэглэнэ.
+          </p>
+          <label class="check">
+            <input id="athlete-consent-info" name="consent_info" type="checkbox" />
+            <span>Нэр, анги, цол, амжилтыг сайтад нийтлэх зөвшөөрөл авсан</span>
+          </label>
+          <label class="check">
+            <input id="athlete-consent-photo" name="consent_photo" type="checkbox" />
+            <span>Зургийг сайтад нийтлэх зөвшөөрөл авсан</span>
+          </label>
+          <label class="check">
+            <input
+              id="athlete-published"
+              name="is_published"
+              type="checkbox"
+              aria-describedby="publish-rule"
+            />
+            <span>Сайтад нийтлэх</span>
+          </label>
+          <p id="publish-rule" class="admin-hint">
+            Эхний зөвшөөрлийг тэмдэглээгүй бол нийтлэх боломжгүй. Нийтлээгүй бүртгэл ноорог
+            хэлбэрээр хадгалагдаж, олон нийтэд харагдахгүй.
+          </p>
+        </fieldset>
+
+        <div class="admin-actions">
+          <button id="athlete-save" class="button gold" type="submit">Хадгалах</button>
+          <button class="admin-button" type="button" data-close-dialog>Болих</button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- Тэмцээний амжилтын цонх -->
+    <dialog id="achievement-dialog" class="admin-dialog" aria-labelledby="achievement-dialog-title">
+      <form id="achievement-form" class="admin-form" method="dialog" novalidate>
+        <h2 id="achievement-dialog-title" class="as-h3">Шинэ амжилт</h2>
+        <p id="achievement-form-error" class="admin-status is-error" role="alert"></p>
+
+        <label for="achievement-athlete">
+          Тамирчин
+          <span class="required">(заавал)</span>
+        </label>
+        <select id="achievement-athlete" name="athlete_id" required></select>
+
+        <label for="achievement-tournament">
+          Тэмцээний нэр
+          <span class="required">(заавал)</span>
+        </label>
+        <input
+          id="achievement-tournament"
+          name="tournament_name"
+          type="text"
+          maxlength="200"
+          required
+        />
+
+        <div class="admin-grid">
+          <div>
+            <label for="achievement-result">
+              Үр дүн
+              <span class="required">(заавал)</span>
+            </label>
+            <input
+              id="achievement-result"
+              name="result"
+              type="text"
+              maxlength="120"
+              placeholder="Жишээ: 2-р байр"
+              required
+            />
+          </div>
+          <div>
+            <label for="achievement-date">Огноо</label>
+            <input id="achievement-date" name="event_date" type="date" />
+          </div>
+        </div>
+
+        <label for="achievement-description">Товч тайлбар</label>
+        <textarea
+          id="achievement-description"
+          name="description"
+          rows="3"
+          maxlength="600"
+        ></textarea>
+
+        <label class="check">
+          <input
+            id="achievement-published"
+            name="is_published"
+            type="checkbox"
+            aria-describedby="achievement-rule"
+          />
+          <span>Сайтад нийтлэх</span>
+        </label>
+        <p id="achievement-rule" class="admin-hint">
+          Амжилт нь тамирчин өөрөө нийтлэгдсэн үед л олон нийтэд харагдана. Зөвхөн албан ёсны
+          дүнгээр баталгаажсан амжилтыг оруулна уу.
+        </p>
+
+        <div class="admin-actions">
+          <button id="achievement-save" class="button gold" type="submit">Хадгалах</button>
+          <button class="admin-button" type="button" data-close-dialog>Болих</button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- Устгахын өмнөх баталгаажуулалт -->
+    <dialog
+      id="confirm-dialog"
+      class="admin-dialog is-small"
+      aria-labelledby="confirm-title"
+      aria-describedby="confirm-text"
+    >
+      <h2 id="confirm-title" class="as-h3">Устгах уу?</h2>
+      <p id="confirm-text"></p>
+      <div class="admin-actions">
+        <button id="confirm-yes" class="admin-button is-danger" type="button">Тийм, устгах</button>
+        <button id="confirm-no" class="admin-button" type="button">Болих</button>
+      </div>
+    </dialog>
+  </body>
+</html>
