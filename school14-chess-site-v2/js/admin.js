@@ -108,6 +108,7 @@
     $('admin-email').textContent = Backend.email;
     showView('app');
     await reload();
+    openFromSiteLink();
   }
 
   $('login-form').addEventListener('submit', async (event) => {
@@ -379,6 +380,97 @@
       : 'Сонгосон зургийг хаслаа.';
   });
 
+  /* Гол амжилтууд (тамирчны маягт дахь 3 мөр) ------------------------------ */
+
+  const HIGHLIGHT_LIMIT = 3;
+  let editingHighlights = []; // Маягт нээгдэх үеийн гол амжилтууд (мөрийн дарааллаар)
+
+  const highlightFields = (index) => ({
+    tournament: $(`highlight-${index + 1}-tournament`),
+    result: $(`highlight-${index + 1}-result`),
+    date: $(`highlight-${index + 1}-date`),
+  });
+
+  // Тамирчны гол амжилтууд: шинэ огноотой нь эхэнд.
+  function featuredOf(athleteId) {
+    return achievements.filter((item) => item.athlete_id === athleteId && item.is_featured);
+  }
+
+  function fillHighlights(athlete) {
+    editingHighlights = athlete ? featuredOf(athlete.id).slice(0, HIGHLIGHT_LIMIT) : [];
+    for (let index = 0; index < HIGHLIGHT_LIMIT; index += 1) {
+      const fields = highlightFields(index);
+      const item = editingHighlights[index];
+      fields.tournament.value = item?.tournament_name || '';
+      fields.result.value = item?.result || '';
+      fields.date.value = item?.event_date || '';
+    }
+  }
+
+  // Мөр бүрийг уншина. Тэмцээн, үр дүнгийн аль нэгийг л бөглөсөн бол алдаа заана.
+  function readHighlights() {
+    const rows = [];
+    for (let index = 0; index < HIGHLIGHT_LIMIT; index += 1) {
+      const fields = highlightFields(index);
+      const row = {
+        tournament_name: fields.tournament.value.trim(),
+        result: fields.result.value.trim(),
+        event_date: fields.date.value || null,
+      };
+      const filled = row.tournament_name || row.result || row.event_date;
+      if (filled && !row.tournament_name) {
+        fields.tournament.focus();
+        throw new Error(`${index + 1}-р гол амжилтын тэмцээний нэрийг оруулна уу.`);
+      }
+      if (filled && !row.result) {
+        fields.result.focus();
+        throw new Error(`${index + 1}-р гол амжилтын үр дүнг оруулна уу (жишээ нь «1-р байр»).`);
+      }
+      rows.push(filled ? row : null);
+    }
+    return rows;
+  }
+
+  /*
+    Мөр бүрийг хуучин гол амжилттай нь харьцуулна:
+      бөглөсөн + өмнө байсан  → засна
+      бөглөсөн + шинэ         → «гол амжилт» болгон нэмнэ
+      хоосолсон + өмнө байсан → картнаас хасна (амжилт өөрөө жагсаалтад үлдэнэ)
+  */
+  async function saveHighlights(athleteId, rows) {
+    let changed = 0;
+    for (let index = 0; index < HIGHLIGHT_LIMIT; index += 1) {
+      const row = rows[index];
+      const previous = editingHighlights[index];
+      if (row && previous) {
+        const same =
+          row.tournament_name === previous.tournament_name &&
+          row.result === previous.result &&
+          row.event_date === (previous.event_date || null);
+        if (!same) {
+          editingHighlights[index] = await Backend.update('achievements', previous.id, row);
+          changed += 1;
+        }
+      } else if (row) {
+        // Хадгалсан мөрийг санана: дараагийн мөр дээр алдаа гараад дахин хадгалахад давхардахгүй.
+        editingHighlights[index] = await Backend.insert('achievements', {
+          ...row,
+          athlete_id: athleteId,
+          is_featured: true,
+          // Тамирчин нийтлэгдээгүй бол сайтад харагдахгүй (supabase/schema.sql).
+          is_published: true,
+        });
+        changed += 1;
+      } else if (previous) {
+        await Backend.update('achievements', previous.id, { is_featured: false });
+        editingHighlights[index] = undefined;
+        changed += 1;
+      }
+    }
+    editingHighlights = [];
+    return changed;
+  }
+
   // Зөвшөөрөлгүй бол «Сайтад нийтлэх»-ийг тэмдэглэх боломжгүй.
   function syncPublishCheckbox() {
     const consent = $('athlete-consent-info').checked;
@@ -421,6 +513,7 @@
           });
       }
     }
+    fillHighlights(athlete);
     syncPublishCheckbox();
     athleteDialog.showModal();
     athleteForm.full_name.focus();
@@ -444,6 +537,7 @@
     errorBox.textContent = '';
 
     let record;
+    let highlights;
     try {
       if (athleteForm.full_name.value.trim() === '') {
         athleteForm.full_name.focus();
@@ -461,6 +555,7 @@
         consent_photo: athleteForm.consent_photo.checked,
         is_published: athleteForm.consent_info.checked && athleteForm.is_published.checked,
       };
+      highlights = readHighlights();
     } catch (error) {
       errorBox.textContent = error.message;
       return;
@@ -491,10 +586,15 @@
           photoMessage = ' Зураг устгагдлаа.';
         }
 
+        // 3. Гол амжилтууд.
+        const highlightCount = await saveHighlights(saved.id, highlights);
+        const highlightMessage = highlightCount ? ' Гол амжилтууд шинэчлэгдлээ.' : '';
+
+        savedFromSiteLink = true;
         athleteDialog.close();
         await reload();
         showStatus(
-          `«${saved.full_name}» хадгалагдлаа — ${saved.is_published ? 'сайтад нийтлэгдсэн' : 'ноорог (олон нийтэд харагдахгүй)'}.${photoMessage}`,
+          `«${saved.full_name}» хадгалагдлаа — ${saved.is_published ? 'сайтад нийтлэгдсэн' : 'ноорог (олон нийтэд харагдахгүй)'}.${photoMessage}${highlightMessage}`,
         );
       } catch (error) {
         errorBox.textContent = error.message;
@@ -575,6 +675,7 @@
         badges.append(
           item.is_published ? badge('Нийтэлсэн', 'is-live') : badge('Ноорог', 'is-draft'),
         );
+        if (item.is_featured) badges.append(badge('Гол амжилт', 'is-ok'));
         if (item.is_published && athlete && !athlete.is_published) {
           badges.append(badge('Тамирчин нийтлэгдээгүй тул харагдахгүй', 'is-warn'));
         }
@@ -614,6 +715,7 @@
       achievementForm.event_date.value = item.event_date || '';
       achievementForm.description.value = item.description || '';
       achievementForm.is_published.checked = item.is_published;
+      achievementForm.is_featured.checked = Boolean(item.is_featured);
     } else {
       achievementForm.athlete_id.value = $('achievement-filter').value;
     }
@@ -648,12 +750,24 @@
       event_date: achievementForm.event_date.value || null,
       description: emptyToNull(achievementForm.description.value),
       is_published: achievementForm.is_published.checked,
+      is_featured: achievementForm.is_featured.checked,
     };
+
+    // Нэг тамирчинд 3-аас олон гол амжилт байвал карт ачаалалтай болно.
+    const otherFeatured = featuredOf(record.athlete_id).filter(
+      (item) => item.id !== editingAchievement?.id,
+    );
+    if (record.is_featured && otherFeatured.length >= HIGHLIGHT_LIMIT) {
+      achievementForm.is_featured.focus();
+      errorBox.textContent = `${athleteName(record.athlete_id)} аль хэдийн ${HIGHLIGHT_LIMIT} гол амжилттай. Эхлээд аль нэгийг нь хасна уу.`;
+      return;
+    }
 
     await withBusy($('achievement-save'), async () => {
       try {
         if (editingAchievement) await Backend.update('achievements', editingAchievement.id, record);
         else await Backend.insert('achievements', record);
+        savedFromSiteLink = true;
         achievementDialog.close();
         await reload();
         showStatus(
@@ -680,6 +794,54 @@
       showStatus('Амжилт устгагдлаа.');
     } catch (error) {
       showError(error);
+    }
+  }
+
+  /* Сайтаас «Засах» дарж ирэх --------------------------------------------- */
+
+  /*
+    athletes.html дээрх админы товчнууд энд дараах хаягаар ирнэ:
+      admin.html#athlete=<id>           тамирчны маягт
+      admin.html#new-athlete            шинэ тамирчин
+      admin.html#achievement=<id>       амжилтын маягт
+      admin.html#new-achievement=<id>   тухайн тамирчинд шинэ амжилт (id заавал биш)
+    Маягтыг хаахад (хадгалсан эсвэл болисон) сайтын хуудас руу буцна.
+  */
+  let savedFromSiteLink = false;
+
+  function openFromSiteLink() {
+    const [action, id = ''] = decodeURIComponent(location.hash.slice(1)).split('=');
+    if (!action) return;
+    history.replaceState(null, '', location.pathname); // Дахин ачаалахад маягт дахин нээгдэхгүй.
+
+    let dialog = null;
+    if (action === 'athlete' || action === 'new-athlete') {
+      const athlete = athletes.find((item) => item.id === id) || null;
+      if (action === 'athlete' && !athlete) {
+        return showError(new Error('Засах тамирчин олдсонгүй. Устгагдсан байж магадгүй.'));
+      }
+      openAthleteForm(athlete);
+      dialog = athleteDialog;
+    } else if (action === 'achievement' || action === 'new-achievement') {
+      showPanel(tabs[1]);
+      const item = achievements.find((candidate) => candidate.id === id) || null;
+      if (action === 'achievement' && !item) {
+        return showError(new Error('Засах амжилт олдсонгүй. Устгагдсан байж магадгүй.'));
+      }
+      if (action === 'new-achievement' && athletes.some((athlete) => athlete.id === id)) {
+        $('achievement-filter').value = id;
+        renderAchievements();
+      }
+      openAchievementForm(item);
+      dialog = achievementDialog;
+    }
+
+    if (dialog?.open) {
+      dialog.addEventListener(
+        'close',
+        () => location.assign('athletes.html' + (savedFromSiteLink ? '#saved' : '')),
+        { once: true },
+      );
     }
   }
 

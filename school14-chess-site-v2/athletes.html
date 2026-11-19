@@ -3,16 +3,24 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#244de9" />
+    <meta name="theme-color" content="#2f4a2c" />
     <title>Тамирчид, амжилт | 14 дүгээр сургуулийн шатрын клуб</title>
     <meta
       name="description"
-      content="Шатрын клубын тамирчны хөгжлийн замнал, нийтлэхийг зөвшөөрсөн тамирчдын танилцуулга болон баталгаажсан тэмцээний амжилт."
+      content="Шатрын клубын нийтлэхийг зөвшөөрсөн тамирчдын танилцуулга, цол, чансаа болон баталгаажсан тэмцээний амжилт."
     />
     <link rel="icon" type="image/svg+xml" href="assets/club-logo.svg" />
 
-    <!-- Загвар -->
+    <!-- Фонт ба загвар -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Literata:opsz,wght@7..72,400;7..72,500&display=swap"
+    />
     <link rel="stylesheet" href="css/style.css" />
+    <!-- Админ нэвтэрсэн үед гарах товч, тэмдэг, цонхны загвар -->
+    <link rel="stylesheet" href="css/admin.css" />
 
     <!-- Өнгөний горимыг хуудас зурагдахаас өмнө тохируулна -->
     <script src="js/theme.js"></script>
@@ -22,29 +30,32 @@
     <script src="js/common.js" defer></script>
     <script src="js/backend-config.js" defer></script>
     <script src="js/backend.js" defer></script>
+    <script src="js/admin-bar.js" defer></script>
     <script src="js/athletes.js" defer></script>
   </head>
   <body>
     <a class="skip" href="#main">Үндсэн агуулга руу шилжих</a>
 
-    <!-- Сургуулийн мөр ба толгой хэсэг (бүх хуудсанд ижил) -->
-    <div class="school-bar">
-      <div class="container">
-        <span>НИЙСЛЭЛИЙН ЕРӨНХИЙ БОЛОВСРОЛЫН 14 ДҮГЭЭР СУРГУУЛЬ</span>
-        <a href="https://14school.mn/" target="_blank" rel="noopener" data-club-href="schoolUrl">
-          Сургуулийн цахим хуудас ↗
-        </a>
-      </div>
-    </div>
+    <!-- Толгой хэсэг (бүх хуудсанд ижил) -->
     <header class="header">
       <div class="container header-inner">
-        <a class="brand" href="index.html" aria-label="Шатрын клуб — Нүүр хуудас">
-          <img src="assets/club-logo.svg" width="56" height="56" alt="" />
+        <a class="brand" href="index.html" aria-label="14 дүгээр сургуулийн шатрын клуб — Нүүр хуудас">
+          <img src="assets/club-logo.svg" width="44" height="44" alt="" />
           <span>
-            ШАТРЫН КЛУБ
-            <small>Мэдлэг. Хөдөлмөр. Дэвшил.</small>
+            Шатрын клуб
+            <small>14 дүгээр сургууль</small>
           </span>
         </a>
+        <div class="header-tools">
+          <button
+            class="theme-toggle"
+            type="button"
+            aria-label="Харанхуй горимд шилжих"
+            aria-pressed="false"
+          >
+            <span aria-hidden="true">☾</span>
+          </button>
+        </div>
         <button
           id="menu"
           class="menu"
@@ -62,101 +73,24 @@
           <a href="athletes.html" aria-current="page">Тамирчид</a>
           <a href="contact.html">Холбоо барих</a>
         </nav>
-        <div class="header-tools">
-          <button
-            class="theme-toggle"
-            type="button"
-            aria-label="Харанхуй горимд шилжих"
-            aria-pressed="false"
-          >
-            <span aria-hidden="true">☾</span>
-          </button>
-        </div>
       </div>
     </header>
     <main id="main" tabindex="-1">
-      <!-- Тамирчны хөгжлийн замнал -->
-      <section id="athlete" class="section athlete">
-        <div class="container">
-          <div class="section-heading">
-            <div>
-              <p class="eyebrow">ТАМИРЧНЫ ХӨГЖИЛ</p>
-              <h1 class="page-title">
-                Сонирхлоос
-                <br />
-                <span>спортын амжилт руу.</span>
-              </h1>
-            </div>
-            <p class="section-intro">
-              Тэмцээнд тоглох хүсэлтэй хүүхдэд системтэй бэлтгэл, өргийн шинжилгээ, бодит туршлага
-              хэрэгтэй. Багштайгаа дараагийн алхмаа төлөвлөнө.
-            </p>
-          </div>
-          <div class="athlete-path">
-            <article>
-              <span>01</span>
-              <h2 class="step-title as-h3">Сууриа бататгах</h2>
-              <p>
-                Дүрэм, тактик, төгсгөлийн мэдлэгээ эзэмшиж, тогтмол бэлтгэл хийх дадалтай болно.
-              </p>
-            </article>
-            <article>
-              <span>02</span>
-              <h2 class="step-title as-h3">Тэмцээнд дадлагажих</h2>
-              <p>
-                Клубын дотоод тэмцээнээс эхэлж, цагтай тоглох, өргөө тэмдэглэх туршлага
-                хуримтлуулна.
-              </p>
-            </article>
-            <article>
-              <span>03</span>
-              <h2 class="step-title as-h3">Өрсөлдөж суралцах</h2>
-              <p>
-                Бэлтгэлийн түвшиндээ тохирсон дүүрэг, нийслэлийн болон нэрэмжит тэмцээнд оролцоно.
-              </p>
-            </article>
-            <article>
-              <span>04</span>
-              <h2 class="step-title as-h3">Дараагийн зорилгоо тавих</h2>
-              <p>
-                Өргийн алдаагаа шинжилж, чансаа, зэрэг, цолны шаардлагад хүрэх бэлтгэлээ багштайгаа
-                төлөвлөнө.
-              </p>
-            </article>
-          </div>
-          <div class="athlete-callout">
-            <div>
-              <h2 class="callout-title as-h3">Амжилтыг бэлтгэлээс эхлүүлнэ.</h2>
-              <p>
-                Тэмцээний дүнгээс гадна тооцооллын чанар, цаг ашиглалт, тоглолтын тогтвортой байдлыг
-                анхаарна. Зэрэг, цол нь холбогдох шаардлагыг хангасан гүйцэтгэлээр баталгаажна.
-              </p>
-            </div>
-            <a href="contact.html" class="button gold">Бэлтгэлийн талаар ярилцах ↗</a>
-          </div>
-        </div>
-      </section>
+      <div class="container page-head">
+        <h1>Тамирчид, амжилт</h1>
+        <p class="lede">
+          Эцэг эх, асран хамгаалагчийн зөвшөөрөлтэйгөөр нийтэлсэн тамирчид болон тэдний тэмцээний
+          амжилт.
+        </p>
+      </div>
 
-      <!-- Тамирчид: js/athletes.js нийтлэгдсэн, зөвшөөрөл нь баталгаажсан бүртгэлийг сервер­ээс уншина -->
-      <section id="athletes" class="section container" aria-labelledby="athletes-title">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">МАНАЙ ТАМИРЧИД</p>
-            <h2 id="athletes-title">
-              Клубын
-              <br />
-              <span>тамирчид.</span>
-            </h2>
-          </div>
-          <p class="section-intro">
-            Эцэг эх, асран хамгаалагчийн зөвшөөрөлтэйгөөр нийтэлсэн тамирчдын танилцуулга, цол,
-            чансаа.
-          </p>
-        </div>
+      <!-- Тамирчид: js/athletes.js нийтлэгдсэн, зөвшөөрөл нь баталгаажсан бүртгэлийг серверээс уншина -->
+      <section id="athletes" class="container" aria-labelledby="athletes-title">
+        <h2 id="athletes-title" class="visually-hidden">Клубын тамирчид</h2>
         <p id="athlete-status" class="data-status" role="status"></p>
         <div id="athlete-list" class="athlete-list">
           <div class="achievements-empty">
-            <span aria-hidden="true">♞</span>
+            <img src="assets/pieces/blueN.svg" width="40" height="40" alt="" />
             <div>
               <h3>Тамирчдын танилцуулга удахгүй</h3>
               <p>Зөвшөөрөл нь баталгаажсан тамирчдын мэдээллийг нийтэлсний дараа энд харагдана.</p>
@@ -166,54 +100,109 @@
       </section>
 
       <!-- Тэмцээний амжилт -->
-      <section id="achievements" class="section container" aria-labelledby="achievements-title">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">КЛУБЫН БАХАРХАЛ</p>
-            <h2 id="achievements-title">
-              Тэмцээний
-              <br />
-              <span>амжилтын хуудас.</span>
-            </h2>
+      <section id="achievements" class="section" aria-labelledby="achievements-title">
+        <div class="container">
+          <div class="section-head">
+            <h2 id="achievements-title">Тэмцээний амжилт</h2>
+            <p>Баталгаажсан тэмцээний дүн, шинээр авсан зэрэг, цол.</p>
           </div>
-          <p class="section-intro">
-            Баталгаажсан тэмцээний дүн, шинээр авсан зэрэг, цолыг эндээс үзээрэй.
-          </p>
-        </div>
-        <div id="achievement-list" class="achievement-list">
-          <div class="achievements-empty">
-            <span aria-hidden="true">♜</span>
-            <div>
-              <h3>Амжилтын мэдээ удахгүй</h3>
-              <p>Баталгаажсан тэмцээний дүнг нийтэлсний дараа энд харагдана.</p>
+          <div id="achievement-list" class="achievement-list">
+            <div class="achievements-empty">
+              <img src="assets/pieces/blueR.svg" width="40" height="40" alt="" />
+              <div>
+                <h3>Амжилтын мэдээ удахгүй</h3>
+                <p>Баталгаажсан тэмцээний дүнг нийтэлсний дараа энд харагдана.</p>
+              </div>
             </div>
           </div>
+          <noscript>
+            <p class="data-status">
+              Тамирчид болон амжилтын жагсаалтыг үзэхэд JavaScript шаардлагатай. Мэдээлэл авах бол
+              <a href="contact.html">бидэнтэй холбогдоорой</a>.
+            </p>
+          </noscript>
         </div>
-        <noscript>
-          <p class="data-status">
-            Тамирчид болон амжилтын жагсаалтыг үзэхэд JavaScript шаардлагатай. Мэдээлэл авах бол
-            <a href="contact.html">бидэнтэй холбогдоорой</a>
-            .
+      </section>
+
+
+      <!-- Хүүхдийн хөгжлийн зам: Монголын шатрын холбооны зэрэг, цол руу -->
+      <section id="growth" class="section alt" aria-labelledby="growth-title">
+        <div class="container">
+          <div class="section-head">
+            <h2 id="growth-title">Хүүхдийн хөгжлийн зам</h2>
+            <p>
+              Шатраар дамжуулан хүүхэд бие даан сэтгэж, зорилгодоо тэвчээртэй хүрч сурна. Сонирхол,
+              хичээл зүтгэлтэй сурагчдыг анхны нүүдлээс эхлээд Монголын шатрын холбооны зэрэг, спортын
+              дэд мастер цол, дотоодын томоохон тэмцээн хүртэл алхам алхмаар бэлтгэнэ.
+            </p>
+          </div>
+          <ol class="growth">
+            <li>
+              <span class="growth-stage">Анхан шат</span>
+              <h3>Шатар сурна</h3>
+              <p>Дүрмээ сурч, бүтэн өрөг тоглож, анхны мадаа тавина.</p>
+            </li>
+            <li>
+              <span class="growth-stage">Суурь бататгах</span>
+              <h3>3-р зэрэг</h3>
+              <p>Тактик, мадын хэв маягаа бататгаж, анхны тэмцээндээ оролцоно.</p>
+            </li>
+            <li>
+              <span class="growth-stage">Суурь бататгах</span>
+              <h3>2-р зэрэг</h3>
+              <p>Тэмцээнд тогтмол тоглож, тооцоолол, төлөвлөгөөгөө ахиулна.</p>
+            </li>
+            <li>
+              <span class="growth-stage">Тэмцээний бэлтгэл</span>
+              <h3>1-р зэрэг</h3>
+              <p>Гарааны сантай болж, өргөө шинжилж, хот, улсын тэмцээнд өрсөлдөнө.</p>
+            </li>
+            <li>
+              <span class="growth-stage">Тэмцээний бэлтгэл</span>
+              <h3>Спортын дэд мастер</h3>
+              <p>Дотоодын томоохон тэмцээнд амжилт гаргаж, спортын дэд мастер цолны шаардлагыг хангахыг зорино.</p>
+            </li>
+          </ol>
+          <p class="note growth-note">
+            Зэрэг, цолыг Монголын шатрын холбооны журмын дагуу тэмцээний амжилтаар олгоно. Хүүхэд бүр
+            өөр хурдтай ахидаг тул багш ахицыг нь тогтмол хянаж, дараагийн зорилгыг хамт тавина.
           </p>
-        </noscript>
+          <p class="section-foot"><a class="text-link" href="training.html#program">Түвшин бүрийн хөтөлбөр</a></p>
+        </div>
+      </section>
+
+
+      <!-- Бүртгэлийн уриалга -->
+      <section class="cta-band" aria-labelledby="cta-title">
+        <div class="checker" aria-hidden="true"></div>
+        <div class="container">
+          <div>
+            <h2 id="cta-title">Тэмцээнд бэлтгэх үү?</h2>
+            <p>Тэмцээний бэлтгэлийн бүлэг, ээлжийн талаар багштай ярилцаарай.</p>
+          </div>
+          <div class="actions">
+            <a class="button light" href="tel:+97680344372" data-club-href="phone">
+              <span>Залгах:&nbsp;<span data-club="phone">+976 80344372</span></span>
+            </a>
+            <a class="button outline-light" href="training.html#level-competition">Тэмцээний бэлтгэл</a>
+          </div>
+        </div>
       </section>
     </main>
 
     <!-- Хөл хэсэг (бүх хуудсанд ижил) -->
     <footer>
       <div class="container footer-top">
-        <a class="brand" href="index.html" aria-label="Шатрын клуб — Нүүр хуудас">
-          <img src="assets/club-logo.svg" width="48" height="48" alt="" />
-          <span>
-            ШАТРЫН КЛУБ
-            <small>14 дүгээр сургууль</small>
-          </span>
-        </a>
-        <p>
-          Мэдлэгийг нүүдэлд.
-          <br />
-          Хичээл зүтгэлийг хөгжилд.
-        </p>
+        <div class="footer-brand">
+          <a class="brand" href="index.html" aria-label="14 дүгээр сургуулийн шатрын клуб — Нүүр хуудас">
+            <img src="assets/club-logo.svg" width="44" height="44" alt="" />
+            <span>
+              Шатрын клуб
+              <small>14 дүгээр сургууль</small>
+            </span>
+          </a>
+          <p>Нийслэлийн ерөнхий боловсролын 14 дүгээр сургуулийн шатрын клуб.</p>
+        </div>
         <nav class="footer-nav" aria-label="Хөл хэсгийн цэс">
           <ul>
             <li><a href="index.html">Нүүр</a></li>
@@ -226,10 +215,7 @@
         <ul class="footer-contact">
           <li>
             <a href="tel:+97680344372" data-club-href="phone">
-              <span>
-                Утас:&nbsp;
-                <span data-club="phone">8034-4372</span>
-              </span>
+              <span>Утас:&nbsp;<span data-club="phone">+976 80344372</span></span>
             </a>
           </li>
           <li>
@@ -238,21 +224,15 @@
             </a>
           </li>
           <li>
-            <a
-              href="https://14school.mn/"
-              target="_blank"
-              rel="noopener"
-              data-club-href="schoolUrl"
-            >
+            <a href="https://14school.mn/" target="_blank" rel="noopener" data-club-href="schoolUrl">
               Сургуулийн цахим хуудас ↗
             </a>
           </li>
         </ul>
       </div>
       <div class="container footer-bottom">
-        <span>© 2026 · 14 дүгээр сургуулийн шатрын клуб</span>
+        <span>© 2026 14 дүгээр сургуулийн шатрын клуб</span>
         <a href="admin.html" rel="nofollow">Админ</a>
-        <a href="#main">Дээш буцах ↑</a>
       </div>
     </footer>
   </body>

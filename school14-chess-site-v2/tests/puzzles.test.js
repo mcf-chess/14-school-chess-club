@@ -28,7 +28,7 @@ test('тэрэг шулуун нүүж, саад дээгүүр харайхгү
   assert.equal(Chess.illegalReason(position, 'a1', 'd1'), null);
 });
 
-test('ноёноо шахад үлдээх нүүдэл дүрмийн бус', () => {
+test('ноёноо шагт үлдээх нүүдэл дүрмийн бус', () => {
   const position = { e1: 'wK', e2: 'wR', e8: 'bR', a8: 'bK' };
   assert.equal(Chess.illegalReason(position, 'e2', 'a2').code, 'self-check');
   assert.equal(Chess.illegalReason(position, 'e2', 'e5'), null);
@@ -46,7 +46,7 @@ test('хүү: урагш нэг/хоёр нүд, ташуу иднэ', () => {
   assert.deepEqual(Chess.legalMoves(position, 'h4'), []);
 });
 
-test('шах, мат, патыг ялгана', () => {
+test('шаг, мад, жидийг ялгана', () => {
   const mate = { g8: 'bK', f7: 'bP', g7: 'bP', h7: 'bP', e8: 'wR', g1: 'wK' };
   assert.ok(Chess.inCheck(mate, 'b') && Chess.isCheckmate(mate, 'b'));
   const escape = { g8: 'bK', f7: 'bP', g7: 'bP', e8: 'wR', g1: 'wK' }; // h7 чөлөөтэй
@@ -57,33 +57,65 @@ test('шах, мат, патыг ялгана', () => {
 
 console.log('\nБодлогууд');
 
+const after = (position, move) => Chess.applyMove(position, move.from, move.to);
+
+// Цагаан нүүсний дараах байрлал: хар юу ч хийсэн цагаан n-1 нүүдэлд мад тавих уу?
+function forces(position, n) {
+  if (Chess.isCheckmate(position, 'b')) return true;
+  if (n === 1) return false;
+  const replies = Chess.allLegalMoves(position, 'b');
+  return replies.length > 0 && replies.every((reply) => winsIn(after(position, reply), n - 1));
+}
+
+function winsIn(position, n) {
+  return Chess.allLegalMoves(position, 'w').some((move) => forces(after(position, move), n));
+}
+
+const keysIn = (position, n) =>
+  Chess.allLegalMoves(position, 'w').filter((move) => forces(after(position, move), n));
+
 PUZZLES.forEach((puzzle, index) => {
   const label = `${index + 1}. ${puzzle.title}`;
-  const { from, to } = puzzle.solution;
+  const line = puzzle.line;
 
-  test(`${label}: байрлал зөв (ноён тус бүр нэг, хэн ч шахад ороогүй)`, () => {
+  test(`${label}: түвшин, нүүдлийн тоо зөв`, () => {
+    assert.ok(['Амархан', 'Дунд', 'Хэцүү', 'Маш хэцүү'].includes(puzzle.level));
+    assert.equal(line.length % 2, 1, 'цагаан эхэлж, цагаан дуусгана');
+    assert.ok(line.length <= 5, 'гурваас олон нүүдэлгүй');
+    assert.ok(line.every((move) => move.from && move.to && move.san));
+  });
+
+  test(`${label}: байрлал зөв (ноён тус бүр нэг, хэн ч шагт ороогүй)`, () => {
     const pieces = Object.values(puzzle.position);
     assert.equal(pieces.filter((piece) => piece === 'wK').length, 1);
     assert.equal(pieces.filter((piece) => piece === 'bK').length, 1);
-    assert.ok(!Chess.inCheck(puzzle.position, 'b'), 'хар эхнээсээ шахад байж болохгүй');
+    assert.ok(!Chess.inCheck(puzzle.position, 'b'), 'хар эхнээсээ шагт байж болохгүй');
     assert.ok(!Chess.inCheck(puzzle.position, 'w'));
   });
 
-  test(`${label}: ${puzzle.notation} дүрмийн дагуу бөгөөд үнэхээр мат`, () => {
-    assert.equal(Chess.illegalReason(puzzle.position, from, to), null);
-    assert.ok(Chess.isCheckmate(Chess.applyMove(puzzle.position, from, to), 'b'));
+  test(`${label}: шийдлийн мөр дүрмийн дагуу, харын хариу албадмал, төгсгөл нь мад`, () => {
+    let position = puzzle.position;
+    line.forEach((move, ply) => {
+      const color = ply % 2 === 0 ? 'w' : 'b';
+      assert.equal(position[move.from]?.[0], color, `${move.san}: ${move.from} дээр ${color} дүрс байх ёстой`);
+      assert.equal(Chess.illegalReason(position, move.from, move.to), null, `${move.san} дүрмийн бус`);
+      assert.ok(move.san.includes(move.to), `${move.san} дотор ${move.to} байх ёстой`);
+      if (color === 'b') {
+        assert.deepEqual(Chess.allLegalMoves(position, 'b'), [{ from: move.from, to: move.to }], `${move.san} цорын ганц хариу байх ёстой`);
+      }
+      position = Chess.applyMove(position, move.from, move.to);
+      const last = ply === line.length - 1;
+      if (color === 'w') {
+        assert.equal(Chess.isCheckmate(position, 'b'), last, `${move.san}: мад зөвхөн төгсгөлд`);
+        assert.equal(move.san.endsWith('#'), last);
+      }
+    });
   });
 
-  test(`${label}: өөр мат байхгүй (шийдэл цорын ганц)`, () => {
-    const mates = Chess.allLegalMoves(puzzle.position, 'w').filter((move) =>
-      Chess.isCheckmate(Chess.applyMove(puzzle.position, move.from, move.to), 'b'),
-    );
-    assert.deepEqual(mates, [{ from, to }]);
-  });
-
-  test(`${label}: тэмдэглэгээ шийдэлтэй таарна`, () => {
-    assert.ok(puzzle.notation.includes(to), `${puzzle.notation} дотор ${to} байх ёстой`);
-    assert.ok(puzzle.notation.endsWith('#'));
+  test(`${label}: эхний нүүдэл цорын ганц, богино мад байхгүй`, () => {
+    const n = (line.length + 1) / 2;
+    for (let k = 1; k < n; k++) assert.deepEqual(keysIn(puzzle.position, k), [], `${k} нүүдлийн мад байж болохгүй`);
+    assert.deepEqual(keysIn(puzzle.position, n), [{ from: line[0].from, to: line[0].to }]);
   });
 });
 

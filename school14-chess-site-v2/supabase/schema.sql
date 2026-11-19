@@ -84,6 +84,11 @@ create table if not exists public.achievements (
 
 create index if not exists achievements_athlete_id_idx on public.achievements (athlete_id);
 
+-- Гол амжилт: тамирчны картан дээр харуулах 2–3 том амжилт (тамирчны маягтаас бөглөнө).
+-- Өмнө нь үүсгэсэн өгөгдлийн санд ч энэ мөр баганыг аюулгүй нэмнэ.
+alter table public.achievements
+  add column if not exists is_featured boolean not null default false;
+
 -- Мөр өөрчлөгдөх бүрт updated_at-ийг шинэчилнэ.
 create or replace function public.touch_updated_at()
 returns trigger
@@ -156,7 +161,8 @@ create or replace view public.public_achievements as
     a.tournament_name,
     a.result,
     a.event_date,
-    a.description
+    a.description,
+    a.is_featured
   from public.achievements a
   join public.athletes t on t.id = a.athlete_id
   where a.is_published

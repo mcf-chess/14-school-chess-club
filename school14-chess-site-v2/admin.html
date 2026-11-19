@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#244de9" />
+    <meta name="theme-color" content="#2f4a2c" />
     <meta name="robots" content="noindex, nofollow" />
     <title>Админ | 14 дүгээр сургуулийн шатрын клуб</title>
     <meta
@@ -12,7 +12,13 @@
     />
     <link rel="icon" type="image/svg+xml" href="assets/club-logo.svg" />
 
-    <!-- Загвар -->
+    <!-- Фонт ба загвар -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Literata:opsz,wght@7..72,400;7..72,500&display=swap"
+    />
     <link rel="stylesheet" href="css/style.css" />
     <link rel="stylesheet" href="css/admin.css" />
 
@@ -29,15 +35,15 @@
 
     <header class="header">
       <div class="container header-inner">
-        <a class="brand" href="index.html" aria-label="Шатрын клуб — Нүүр хуудас">
-          <img src="assets/club-logo.svg" width="56" height="56" alt="" />
+        <a class="brand" href="index.html" aria-label="14 дүгээр сургуулийн шатрын клуб — Нүүр хуудас">
+          <img src="assets/club-logo.svg" width="44" height="44" alt="" />
           <span>
-            ШАТРЫН КЛУБ
+            Шатрын клуб
             <small>Админ хэсэг</small>
           </span>
         </a>
         <div class="header-tools">
-          <a class="admin-back" href="athletes.html">Сайт руу буцах ↗</a>
+          <a class="admin-back" href="athletes.html">Сайт руу буцах</a>
           <button
             class="theme-toggle"
             type="button"
@@ -233,6 +239,60 @@
         </fieldset>
 
         <fieldset>
+          <legend>Гол амжилтууд</legend>
+          <p id="highlight-rules" class="admin-hint">
+            Хамгийн том 2–3 амжилтаа бичнэ: тэмцээний нэр ба үр дүн (жишээ нь «Улсын аварга»,
+            «1-р байр»). Тамирчны картан дээр харагдана. Мөрийг хоосолбол картнаас хасагдах ч
+            «Тэмцээний амжилт» жагсаалтад үлдэнэ.
+          </p>
+          <div class="highlight-row">
+            <p class="highlight-number" aria-hidden="true">1</p>
+            <div>
+              <label for="highlight-1-tournament">1-р амжилт: тэмцээн</label>
+              <input id="highlight-1-tournament" type="text" maxlength="200" />
+            </div>
+            <div>
+              <label for="highlight-1-result">Үр дүн</label>
+              <input id="highlight-1-result" type="text" maxlength="120" />
+            </div>
+            <div>
+              <label for="highlight-1-date">Огноо</label>
+              <input id="highlight-1-date" type="date" />
+            </div>
+          </div>
+          <div class="highlight-row">
+            <p class="highlight-number" aria-hidden="true">2</p>
+            <div>
+              <label for="highlight-2-tournament">2-р амжилт: тэмцээн</label>
+              <input id="highlight-2-tournament" type="text" maxlength="200" />
+            </div>
+            <div>
+              <label for="highlight-2-result">Үр дүн</label>
+              <input id="highlight-2-result" type="text" maxlength="120" />
+            </div>
+            <div>
+              <label for="highlight-2-date">Огноо</label>
+              <input id="highlight-2-date" type="date" />
+            </div>
+          </div>
+          <div class="highlight-row">
+            <p class="highlight-number" aria-hidden="true">3</p>
+            <div>
+              <label for="highlight-3-tournament">3-р амжилт: тэмцээн</label>
+              <input id="highlight-3-tournament" type="text" maxlength="200" />
+            </div>
+            <div>
+              <label for="highlight-3-result">Үр дүн</label>
+              <input id="highlight-3-result" type="text" maxlength="120" />
+            </div>
+            <div>
+              <label for="highlight-3-date">Огноо</label>
+              <input id="highlight-3-date" type="date" />
+            </div>
+          </div>
+        </fieldset>
+
+        <fieldset>
           <legend>Тамирчны зураг</legend>
           <div class="photo-field">
             <div id="photo-preview" class="photo-preview">
@@ -361,6 +421,17 @@
           Амжилт нь тамирчин өөрөө нийтлэгдсэн үед л олон нийтэд харагдана. Зөвхөн албан ёсны
           дүнгээр баталгаажсан амжилтыг оруулна уу.
         </p>
+
+        <label class="check">
+          <input
+            id="achievement-featured"
+            name="is_featured"
+            type="checkbox"
+            aria-describedby="featured-rule"
+          />
+          <span>Гол амжилт — тамирчны картан дээр харуулах</span>
+        </label>
+        <p id="featured-rule" class="admin-hint">Нэг тамирчинд 3 хүртэл гол амжилт.</p>
 
         <div class="admin-actions">
           <button id="achievement-save" class="button gold" type="submit">Хадгалах</button>

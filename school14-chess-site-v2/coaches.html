@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#244de9" />
+    <meta name="theme-color" content="#2f4a2c" />
     <title>Багш нар | 14 дүгээр сургуулийн шатрын клуб</title>
     <meta
       name="description"
@@ -11,7 +11,13 @@
     />
     <link rel="icon" type="image/svg+xml" href="assets/club-logo.svg" />
 
-    <!-- Загвар -->
+    <!-- Фонт ба загвар -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Literata:opsz,wght@7..72,400;7..72,500&display=swap"
+    />
     <link rel="stylesheet" href="css/style.css" />
 
     <!-- Өнгөний горимыг хуудас зурагдахаас өмнө тохируулна -->
@@ -20,28 +26,31 @@
     <!-- Хуудасны үйлдлүүд -->
     <script src="js/site-config.js" defer></script>
     <script src="js/common.js" defer></script>
+    <script src="js/admin-bar.js" defer></script>
   </head>
   <body>
     <a class="skip" href="#main">Үндсэн агуулга руу шилжих</a>
 
-    <!-- Сургуулийн мөр ба толгой хэсэг (бүх хуудсанд ижил) -->
-    <div class="school-bar">
-      <div class="container">
-        <span>НИЙСЛЭЛИЙН ЕРӨНХИЙ БОЛОВСРОЛЫН 14 ДҮГЭЭР СУРГУУЛЬ</span>
-        <a href="https://14school.mn/" target="_blank" rel="noopener" data-club-href="schoolUrl">
-          Сургуулийн цахим хуудас ↗
-        </a>
-      </div>
-    </div>
+    <!-- Толгой хэсэг (бүх хуудсанд ижил) -->
     <header class="header">
       <div class="container header-inner">
-        <a class="brand" href="index.html" aria-label="Шатрын клуб — Нүүр хуудас">
-          <img src="assets/club-logo.svg" width="56" height="56" alt="" />
+        <a class="brand" href="index.html" aria-label="14 дүгээр сургуулийн шатрын клуб — Нүүр хуудас">
+          <img src="assets/club-logo.svg" width="44" height="44" alt="" />
           <span>
-            ШАТРЫН КЛУБ
-            <small>Мэдлэг. Хөдөлмөр. Дэвшил.</small>
+            Шатрын клуб
+            <small>14 дүгээр сургууль</small>
           </span>
         </a>
+        <div class="header-tools">
+          <button
+            class="theme-toggle"
+            type="button"
+            aria-label="Харанхуй горимд шилжих"
+            aria-pressed="false"
+          >
+            <span aria-hidden="true">☾</span>
+          </button>
+        </div>
         <button
           id="menu"
           class="menu"
@@ -59,101 +68,77 @@
           <a href="athletes.html">Тамирчид</a>
           <a href="contact.html">Холбоо барих</a>
         </nav>
-        <div class="header-tools">
-          <button
-            class="theme-toggle"
-            type="button"
-            aria-label="Харанхуй горимд шилжих"
-            aria-pressed="false"
-          >
-            <span aria-hidden="true">☾</span>
-          </button>
-        </div>
       </div>
     </header>
     <main id="main" tabindex="-1">
-      <!-- Багш, дасгалжуулагчид -->
-      <section id="team" class="section container">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">БАГШ, ДАСГАЛЖУУЛАГЧИД</p>
-            <h1 class="page-title">
-              Таны хүүхдийг
-              <br />
-              <span>чиглүүлэх багш нар.</span>
-            </h1>
-          </div>
-          <p class="section-intro">
-            Тамирчны бэлтгэл, шатрын дүрэм, тэмцээний туршлагыг хослуулсан багш нар хүүхдийн
-            суралцах замд хамт байна.
-          </p>
-        </div>
-        <div class="team-grid" id="teacher-list">
-          <article class="coach" data-teacher="oyunchimeg">
+      <div class="container page-head">
+        <h1>Багш нар</h1>
+        <p class="lede">
+          Тамирчны бэлтгэл, шатрын дүрэм, тэмцээний туршлагыг хослуулсан багш нар хүүхдийн суралцах
+          замд хамт байна.
+        </p>
+      </div>
+
+      <section class="container page-body" aria-label="Багш, дасгалжуулагчид">
+        <div class="coach-grid" id="teacher-list">
+          <article class="coach" id="oyunchimeg" data-teacher="oyunchimeg">
             <div class="coach-photo">
               <img src="assets/oyunchimeg.jpg" alt="Гэндэнгийн Оюунчимэг" loading="lazy" />
             </div>
-            <div class="coach-body">
-              <p class="eyebrow">ЕРӨНХИЙ ЗААВАРЛАГЧ БАГШ</p>
-              <h2 class="coach-name as-h3">Гэндэнгийн Оюунчимэг</h2>
-              <p class="coach-highlight">Монгол Улсын аварга · 1991</p>
-              <ul>
-                <li>Спортын мастер</li>
-                <li>Олон улсын шүүгч (IA)</li>
-                <li>Шатрын олимпиад, дэлхийн өсвөрийн аварга шалгаруулах тэмцээний шүүгч</li>
-                <li>Улсын аварга шалгаруулах тэмцээний ерөнхий шүүгч</li>
-                <li>Олон улсын шатрын холбооны зааварлагч (FI)</li>
-              </ul>
-              <p class="coach-duty">Тэмцээний бэлтгэлийг удирдан чиглүүлнэ.</p>
-            </div>
+            <p class="coach-role">Ерөнхий зааварлагч багш</p>
+            <h2>Гэндэнгийн Оюунчимэг</h2>
+            <ul>
+              <li>Монгол Улсын аварга (1991)</li>
+              <li>Спортын мастер</li>
+              <li>Олон улсын шүүгч (IA)</li>
+              <li>Шатрын олимпиад, дэлхийн өсвөрийн аварга шалгаруулах тэмцээний шүүгч</li>
+              <li>Улсын аварга шалгаруулах тэмцээний ерөнхий шүүгч</li>
+              <li>Олон улсын шатрын холбооны зааварлагч (FI)</li>
+            </ul>
+            <p class="coach-duty">Тэмцээний бэлтгэлийг удирдан чиглүүлнэ.</p>
           </article>
-          <article class="coach" data-teacher="ganerdene">
+          <article class="coach" id="ganerdene" data-teacher="ganerdene">
             <div class="coach-photo">
               <img src="assets/ganerdene.jpg" alt="Сүхбаатарын Ган-Эрдэнэ" loading="lazy" />
             </div>
-            <div class="coach-body">
-              <p class="eyebrow">АХЛАХ ДАСГАЛЖУУЛАГЧ</p>
-              <h2 class="coach-name as-h3">Сүхбаатарын Ган-Эрдэнэ</h2>
-              <p class="coach-highlight">Олон улсын шүүгч</p>
-              <ul>
-                <li>Олон улсын шүүгч (IA)</li>
-                <li>Спортын дэд мастер</li>
-                <li>Олон улсын шатрын холбооны зааварлагч (FI)</li>
-              </ul>
-              <p class="coach-duty">Ганцаарчилсан болон гүнзгийрүүлсэн бэлтгэлийг хариуцна.</p>
-            </div>
+            <p class="coach-role">Ахлах дасгалжуулагч</p>
+            <h2>Сүхбаатарын Ган-Эрдэнэ</h2>
+            <ul>
+              <li>Олон улсын шүүгч (IA)</li>
+              <li>Спортын дэд мастер</li>
+              <li>Олон улсын шатрын холбооны зааварлагч (FI)</li>
+            </ul>
+            <p class="coach-duty">Ганцаарчилсан болон гүнзгийрүүлсэн бэлтгэлийг хариуцна.</p>
           </article>
-          <article class="coach" data-teacher="chinguun">
+          <article class="coach" id="chinguun" data-teacher="chinguun">
             <div class="coach-photo">
               <img src="assets/chinguun.jpg" alt="Болортамирын Чингүүн" loading="lazy" />
             </div>
-            <div class="coach-body">
-              <p class="eyebrow">БАГШ</p>
-              <h2 class="coach-name as-h3">Болортамирын Чингүүн</h2>
-              <p class="coach-highlight">Олон улсын шатрын холбооны шүүгч</p>
-              <ul>
-                <li>Олон улсын шатрын холбооны шүүгч (FA)</li>
-                <li>Нэгдүгээр зэргийн шатарчин</li>
-                <li>Олон улсын шатрын холбооны зааварлагч (FI)</li>
-              </ul>
-              <p class="coach-duty">
-                Түвшний бүлгүүдийн хичээлийг зааж, сурагчдын дадлагыг чиглүүлнэ.
-              </p>
-            </div>
+            <p class="coach-role">Багш</p>
+            <h2>Болортамирын Чингүүн</h2>
+            <ul>
+              <li>Олон улсын шатрын холбооны шүүгч (FA)</li>
+              <li>Нэгдүгээр зэргийн шатарчин</li>
+              <li>Олон улсын шатрын холбооны зааварлагч (FI)</li>
+            </ul>
+            <p class="coach-duty">Түвшний бүлгүүдийн хичээлийг зааж, сурагчдын дадлагыг чиглүүлнэ.</p>
           </article>
         </div>
       </section>
 
-      <!-- Дараагийн алхам -->
+      <!-- Бүртгэлийн уриалга -->
       <section class="cta-band" aria-labelledby="cta-title">
+        <div class="checker" aria-hidden="true"></div>
         <div class="container">
           <div>
             <h2 id="cta-title">Багштай ярилцах уу?</h2>
             <p>Хүүхдийн нас, одоогийн мэдлэгийг хэлж, тохирох бүлгийн талаар зөвлөгөө аваарай.</p>
           </div>
           <div class="actions">
-            <a class="button gold" href="contact.html">Холбоо барих ↗</a>
-            <a class="button outline-light" href="training.html">Сургалттай танилцах</a>
+            <a class="button light" href="tel:+97680344372" data-club-href="phone">
+              <span>Залгах:&nbsp;<span data-club="phone">+976 80344372</span></span>
+            </a>
+            <a class="button outline-light" href="training.html">Сургалтын хөтөлбөр</a>
           </div>
         </div>
       </section>
@@ -162,18 +147,16 @@
     <!-- Хөл хэсэг (бүх хуудсанд ижил) -->
     <footer>
       <div class="container footer-top">
-        <a class="brand" href="index.html" aria-label="Шатрын клуб — Нүүр хуудас">
-          <img src="assets/club-logo.svg" width="48" height="48" alt="" />
-          <span>
-            ШАТРЫН КЛУБ
-            <small>14 дүгээр сургууль</small>
-          </span>
-        </a>
-        <p>
-          Мэдлэгийг нүүдэлд.
-          <br />
-          Хичээл зүтгэлийг хөгжилд.
-        </p>
+        <div class="footer-brand">
+          <a class="brand" href="index.html" aria-label="14 дүгээр сургуулийн шатрын клуб — Нүүр хуудас">
+            <img src="assets/club-logo.svg" width="44" height="44" alt="" />
+            <span>
+              Шатрын клуб
+              <small>14 дүгээр сургууль</small>
+            </span>
+          </a>
+          <p>Нийслэлийн ерөнхий боловсролын 14 дүгээр сургуулийн шатрын клуб.</p>
+        </div>
         <nav class="footer-nav" aria-label="Хөл хэсгийн цэс">
           <ul>
             <li><a href="index.html">Нүүр</a></li>
@@ -186,10 +169,7 @@
         <ul class="footer-contact">
           <li>
             <a href="tel:+97680344372" data-club-href="phone">
-              <span>
-                Утас:&nbsp;
-                <span data-club="phone">8034-4372</span>
-              </span>
+              <span>Утас:&nbsp;<span data-club="phone">+976 80344372</span></span>
             </a>
           </li>
           <li>
@@ -198,21 +178,15 @@
             </a>
           </li>
           <li>
-            <a
-              href="https://14school.mn/"
-              target="_blank"
-              rel="noopener"
-              data-club-href="schoolUrl"
-            >
+            <a href="https://14school.mn/" target="_blank" rel="noopener" data-club-href="schoolUrl">
               Сургуулийн цахим хуудас ↗
             </a>
           </li>
         </ul>
       </div>
       <div class="container footer-bottom">
-        <span>© 2026 · 14 дүгээр сургуулийн шатрын клуб</span>
+        <span>© 2026 14 дүгээр сургуулийн шатрын клуб</span>
         <a href="admin.html" rel="nofollow">Админ</a>
-        <a href="#main">Дээш буцах ↑</a>
       </div>
     </footer>
   </body>
