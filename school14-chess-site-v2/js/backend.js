@@ -71,6 +71,7 @@ const Backend = (() => {
     if (/too_many_registrations/.test(detail)) {
       return 'Энэ утаснаас өнөөдөр хэт олон бүртгэл илгээсэн байна. Маргааш дахин оролдох эсвэл утсаар холбогдоно уу.';
     }
+    if (/birth_date_invalid/.test(detail)) return 'Төрсөн огноог зөв оруулна уу (3–18 настай хүүхэд).';
     if (/school_type_required/.test(detail)) return 'Аль сургуулийн сурагч болохыг сонгоно уу.';
     if (/consent_required/.test(detail)) return 'Мэдээлэл хадгалах зөвшөөрлийг тэмдэглэнэ үү.';
     if (/parent_phone_check/.test(detail)) return 'Утасны дугаар 8 оронтой байх ёстой.';

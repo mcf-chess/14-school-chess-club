@@ -229,9 +229,9 @@ create policy "Зочин зөвшөөрөлтэй зургийг үзнэ" on s
 --    Төлбөрийн сар бүртгэл эхэлсэн өдрөөс тоологдоно: 11/22-нд эхэлсэн бол
 --    11/22–12/21 эхний сар, дараагийн төлбөр 12/22.
 --
---    Зочин хүснэгтүүдийг шууд уншиж, бичиж ЧАДАХГҮЙ. Зөвхөн доорх хоёр функцийг дуудна:
---      submit_registration  — шинэ бүртгэл нэмж, код, дүн, огноог буцаана
---      registration_status  — код + утасны дугаараар төлөв, төлсөн үеүдийг харна
+--    Зочин хүснэгтүүдийг шууд уншиж, бичиж ЧАДАХГҮЙ. Зөвхөн submit_registration функцийг
+--    дуудаж шинэ бүртгэл нэмнэ; тэр нь төлөх дүн, огноо, гүйлгээний утгыг буцаана.
+--    Гүйлгээний утга: хүүхдийн овог нэр + эцэг эхийн утас.
 --    Хүүхдийн мэдээлэл сайтад хэзээ ч нийтлэгдэхгүй; зөвхөн админ харна.
 -- ---------------------------------------------------------------------------
 
@@ -242,11 +242,13 @@ create table if not exists public.registrations (
   ref_code      text not null unique
                 default 'CH' || lpad(nextval('public.registration_code_seq')::text, 4, '0'),
   child_name    text not null check (char_length(btrim(child_name)) between 2 and 120),
-  child_age     integer check (child_age between 3 and 18),
+  birth_date    date not null check (birth_date between date '2000-01-01' and date '2100-01-01'),
   school_type   text not null check (school_type in ('14', 'other')),
   monthly_fee   integer not null check (monthly_fee between 1 and 10000000),
   start_date    date not null default (now() at time zone 'Asia/Ulaanbaatar')::date,
-  school_grade  text check (char_length(school_grade) <= 80),
+  school_grade  text not null
+                constraint registrations_school_grade_check
+                check (char_length(btrim(school_grade)) between 1 and 80),
   parent_name   text not null check (char_length(btrim(parent_name)) between 2 and 120),
   parent_phone  text not null check (parent_phone ~ '^[0-9]{8}$'),
   shift         text not null check (shift in ('10:00–11:30', '12:00–13:30', '14:00–16:00')),
@@ -336,10 +338,12 @@ grant execute on function public.next_due_date(uuid) to authenticated;
 
 -- Эцэг эхийн бүртгэл. Хүснэгтэд шууд бичих эрхгүй тул зөвхөн энэ функцээр орно.
 -- Нэг утаснаас 24 цагт 5, бүх сайтаас 10 минутад 30-аас олон бүртгэл хүлээн авахгүй.
+drop function if exists public.registration_status(text, text);
 drop function if exists public.submit_registration(text, integer, text, text, text, text, text, text, boolean);
+drop function if exists public.submit_registration(text, integer, text, text, text, text, text, text, text, boolean);
 create or replace function public.submit_registration(
   p_child_name   text,
-  p_child_age    integer,
+  p_birth_date   date,
   p_school_type  text,
   p_school_grade text,
   p_parent_name  text,
@@ -357,6 +361,7 @@ set search_path = public
 as $$
 declare
   v_phone text := regexp_replace(coalesce(p_parent_phone, ''), '\D', '', 'g');
+  v_today date := (now() at time zone 'Asia/Ulaanbaatar')::date;
   v_fee   integer;
   v_row   registrations%rowtype;
 begin
@@ -365,6 +370,11 @@ begin
   end if;
   if coalesce(p_consent, false) is not true then
     raise exception 'consent_required';
+  end if;
+  -- 3–18 настай хүүхэд.
+  if p_birth_date is null or p_birth_date > v_today - interval '3 years'
+     or p_birth_date < v_today - interval '19 years' then
+    raise exception 'birth_date_invalid';
   end if;
   -- Төлбөрийг сервер тогтооно: 14-р сургуулийн сурагч 100,000₮, бусад 250,000₮.
   v_fee := case p_school_type when '14' then 100000 when 'other' then 250000 end;
@@ -379,48 +389,23 @@ begin
   end if;
 
   insert into registrations
-    (child_name, child_age, school_type, monthly_fee, school_grade, parent_name, parent_phone,
+    (child_name, birth_date, school_type, monthly_fee, school_grade, parent_name, parent_phone,
      shift, experience, note, consent_data)
   values
-    (btrim(p_child_name), p_child_age, p_school_type, v_fee, nullif(btrim(p_school_grade), ''),
+    (btrim(p_child_name), p_birth_date, p_school_type, v_fee, btrim(p_school_grade),
      btrim(p_parent_name), v_phone, p_shift, nullif(p_experience, ''), nullif(btrim(p_note), ''), true)
   returning * into v_row;
 
   return json_build_object(
-    'code', v_row.ref_code,
     'fee', v_row.monthly_fee,
     'shift', v_row.shift,
     'start_date', v_row.start_date,
     'period_end', public.billing_period(v_row.start_date, 1) - 1,
-    'next_due', public.billing_period(v_row.start_date, 1)
+    'next_due', public.billing_period(v_row.start_date, 1),
+    'reference', v_row.child_name || ' ' || v_row.parent_phone
   );
 end;
 $$;
 
--- Эцэг эх кодоо болон утсаа оруулж төлөв, баталгаажсан үеүдээ харна.
--- Хүүхдийн нэр, бусад мэдээллийг буцаахгүй.
-drop function if exists public.registration_status(text, text);
-create or replace function public.registration_status(p_code text, p_phone text)
-returns table (status text, shift text, monthly_fee integer, start_date date,
-               paid_periods date[], next_due date)
-language sql
-stable
-security definer
-set search_path = public
-as $$
-  select r.status,
-         r.shift,
-         r.monthly_fee,
-         r.start_date,
-         coalesce((select array_agg(p.period_start order by p.period_start)
-                   from payments p where p.registration_id = r.id), '{}'),
-         public.next_due_date(r.id)
-  from registrations r
-  where r.ref_code = upper(btrim(p_code))
-    and r.parent_phone = right(regexp_replace(coalesce(p_phone, ''), '\D', '', 'g'), 8);
-$$;
-
-revoke all on function public.submit_registration(text, integer, text, text, text, text, text, text, text, boolean) from public;
-revoke all on function public.registration_status(text, text) from public;
-grant execute on function public.submit_registration(text, integer, text, text, text, text, text, text, text, boolean) to anon, authenticated;
-grant execute on function public.registration_status(text, text) to anon, authenticated;
+revoke all on function public.submit_registration(text, date, text, text, text, text, text, text, text, boolean) from public;
+grant execute on function public.submit_registration(text, date, text, text, text, text, text, text, text, boolean) to anon, authenticated;

@@ -822,6 +822,13 @@
     new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ulaanbaatar' }).format(new Date());
   const dateLabel = (iso) => (iso ? String(iso).slice(0, 10).replace(/-/g, '.') : '');
   const money = (n) => `${Number(n).toLocaleString('en-US')}₮`;
+  const ageOf = (birth) => {
+    const [ty, tm, td] = today().split('-').map(Number);
+    const [by, bm, bd] = birth.split('-').map(Number);
+    return ty - by - (tm < bm || (tm === bm && td < bd) ? 1 : 0);
+  };
+  // Эцэг эхэд зааварласан гүйлгээний утга: хүүхдийн овог нэр + утас.
+  const transferRef = (r) => `${r.child_name} ${r.parent_phone}`;
 
   function addMonths(iso, k) {
     const [y, m, d] = String(iso).slice(0, 10).split('-').map(Number);
@@ -940,7 +947,7 @@
         info.append(createElement('strong', r.child_name), createElement('span', r.ref_code, 'reg-code'));
 
         const details = [
-          r.child_age != null && `${r.child_age} настай`,
+          r.birth_date && `Төрсөн ${dateLabel(r.birth_date)} (${ageOf(r.birth_date)} настай)`,
           r.school_type === '14' ? '14-р сургууль' : 'Бусад сургууль',
           r.school_grade,
           r.experience,
@@ -1043,7 +1050,7 @@
     }
     $('payment-amount').value = r.monthly_fee;
     $('payment-date').value = today();
-    $('payment-ref').value = r.ref_code;
+    $('payment-ref').value = transferRef(r);
     paymentDialog.showModal();
     $('payment-date').focus();
   }
@@ -1168,13 +1175,13 @@
   // Харагдаж буй жагсаалтыг Excel / Sheets-д нээгдэх CSV болгон татна.
   $('reg-export').addEventListener('click', () => {
     const header = [
-      'Код', 'Хүүхдийн нэр', 'Нас', 'Сургууль', 'Анги', 'Мэдлэг', 'Ээлж', 'Эцэг/эх', 'Утас',
+      'Код', 'Хүүхдийн нэр', 'Төрсөн өдөр', 'Сургууль', 'Анги', 'Мэдлэг', 'Ээлж', 'Эцэг/эх', 'Утас',
       'Төлөв', 'Сарын төлбөр', 'Эхэлсэн', 'Төлсөн сарын тоо', 'Дараагийн төлбөр',
     ];
     const cell = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
     const lines = visibleRegistrations().map((r) =>
       [
-        r.ref_code, r.child_name, r.child_age, r.school_type === '14' ? '14-р сургууль' : 'Бусад',
+        r.ref_code, r.child_name, r.birth_date, r.school_type === '14' ? '14-р сургууль' : 'Бусад',
         r.school_grade, r.experience, r.shift, r.parent_name, r.parent_phone, r.status,
         r.monthly_fee, r.start_date, paymentsOf(r).length, addMonths(r.start_date, firstUnpaid(r)),
       ].map(cell).join(','),
