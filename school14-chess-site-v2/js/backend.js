@@ -71,10 +71,11 @@ const Backend = (() => {
     if (/too_many_registrations/.test(detail)) {
       return 'Энэ утаснаас өнөөдөр хэт олон бүртгэл илгээсэн байна. Маргааш дахин оролдох эсвэл утсаар холбогдоно уу.';
     }
+    if (/school_type_required/.test(detail)) return 'Аль сургуулийн сурагч болохыг сонгоно уу.';
     if (/consent_required/.test(detail)) return 'Мэдээлэл хадгалах зөвшөөрлийг тэмдэглэнэ үү.';
     if (/parent_phone_check/.test(detail)) return 'Утасны дугаар 8 оронтой байх ёстой.';
-    if (/payments_registration_id_month_key|duplicate key/.test(detail)) {
-      return 'Энэ хүүхдийн тухайн сарын төлбөр аль хэдийн баталгаажсан байна.';
+    if (/payments_one_per_period|duplicate key/.test(detail)) {
+      return 'Энэ хүүхдийн тухайн үеийн төлбөр аль хэдийн баталгаажсан байна.';
     }
     if (/violates check constraint/.test(detail)) return 'Зарим талбарын утга буруу байна. Шалгаад дахин илгээнэ үү.';
     if (/mime type|not supported/i.test(detail)) return 'Энэ төрлийн файлыг хүлээн авахгүй.';

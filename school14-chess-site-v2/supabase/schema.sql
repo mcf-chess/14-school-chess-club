@@ -224,9 +224,14 @@ create policy "Зочин зөвшөөрөлтэй зургийг үзнэ" on s
 --    Эцэг эх сайтаас бүртгүүлнэ. Төлбөрийг дансаар шилжүүлнэ; сайт мөнгө хүлээн
 --    авахгүй. Мөнгө орсныг админ шалгаад «баталгаажуулна».
 --
+--    Сарын төлбөр: 14-р сургуулийн сурагч 100,000₮, бусад сургуулийн сурагч 250,000₮
+--    (submit_registration дотор сервер тогтооно; админ хүүхэд бүрээр өөрчилж болно).
+--    Төлбөрийн сар бүртгэл эхэлсэн өдрөөс тоологдоно: 11/22-нд эхэлсэн бол
+--    11/22–12/21 эхний сар, дараагийн төлбөр 12/22.
+--
 --    Зочин хүснэгтүүдийг шууд уншиж, бичиж ЧАДАХГҮЙ. Зөвхөн доорх хоёр функцийг дуудна:
---      submit_registration  — шинэ бүртгэл нэмж, гүйлгээний кодыг буцаана
---      registration_status  — код + утасны дугаараар төлөв, төлсөн саруудыг харна
+--      submit_registration  — шинэ бүртгэл нэмж, код, дүн, огноог буцаана
+--      registration_status  — код + утасны дугаараар төлөв, төлсөн үеүдийг харна
 --    Хүүхдийн мэдээлэл сайтад хэзээ ч нийтлэгдэхгүй; зөвхөн админ харна.
 -- ---------------------------------------------------------------------------
 
@@ -238,6 +243,9 @@ create table if not exists public.registrations (
                 default 'CH' || lpad(nextval('public.registration_code_seq')::text, 4, '0'),
   child_name    text not null check (char_length(btrim(child_name)) between 2 and 120),
   child_age     integer check (child_age between 3 and 18),
+  school_type   text not null check (school_type in ('14', 'other')),
+  monthly_fee   integer not null check (monthly_fee between 1 and 10000000),
+  start_date    date not null default (now() at time zone 'Asia/Ulaanbaatar')::date,
   school_grade  text check (char_length(school_grade) <= 80),
   parent_name   text not null check (char_length(btrim(parent_name)) between 2 and 120),
   parent_phone  text not null check (parent_phone ~ '^[0-9]{8}$'),
@@ -259,14 +267,14 @@ create index if not exists registrations_phone_idx on public.registrations (pare
 create table if not exists public.payments (
   id              uuid primary key default gen_random_uuid(),
   registration_id uuid not null references public.registrations (id) on delete cascade,
-  month           date not null check (extract(day from month) = 1),  -- сарын 1-ний өдөр
+  period_start    date not null,                                       -- төлбөрийн сар эхлэх өдөр
   amount          integer not null check (amount between 1 and 10000000),
   paid_on         date,
   bank_ref        text check (char_length(bank_ref) <= 200),           -- гүйлгээний утга
   note            text check (char_length(note) <= 300),
   confirmed_by    uuid default auth.uid() references auth.users (id) on delete set null,
   confirmed_at    timestamptz not null default now(),
-  unique (registration_id, month)
+  constraint payments_one_per_period unique (registration_id, period_start)
 );
 
 create index if not exists payments_confirmed_by_idx on public.payments (confirmed_by);
@@ -296,11 +304,43 @@ create policy "Админ төлбөрийг удирдана" on public.payment
   using ((select public.is_admin()))
   with check ((select public.is_admin()));
 
+-- Төлбөрийн үе: бүртгэл эхэлсэн өдрөөс k сарын дараа эхэлнэ.
+-- (1/31 + 1 сар = 2/28 гэх мэт сарын сүүлд таацуулна.)
+create or replace function public.billing_period(p_start date, p_k integer)
+returns date
+language sql
+immutable
+set search_path = public
+as $$ select (p_start + make_interval(months => p_k))::date $$;
+
+-- Дараагийн төлөх ёстой үеийн эхлэх өдөр (эхний төлөгдөөгүй үе).
+create or replace function public.next_due_date(p_registration uuid)
+returns date
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select public.billing_period(r.start_date, k)
+  from registrations r, generate_series(0, 240) k
+  where r.id = p_registration
+    and not exists (
+      select 1 from payments p
+      where p.registration_id = r.id
+        and p.period_start = public.billing_period(r.start_date, k))
+  order by k
+  limit 1;
+$$;
+revoke all on function public.next_due_date(uuid) from public, anon;
+grant execute on function public.next_due_date(uuid) to authenticated;
+
 -- Эцэг эхийн бүртгэл. Хүснэгтэд шууд бичих эрхгүй тул зөвхөн энэ функцээр орно.
 -- Нэг утаснаас 24 цагт 5, бүх сайтаас 10 минутад 30-аас олон бүртгэл хүлээн авахгүй.
+drop function if exists public.submit_registration(text, integer, text, text, text, text, text, text, boolean);
 create or replace function public.submit_registration(
   p_child_name   text,
   p_child_age    integer,
+  p_school_type  text,
   p_school_grade text,
   p_parent_name  text,
   p_parent_phone text,
@@ -309,7 +349,7 @@ create or replace function public.submit_registration(
   p_note         text,
   p_consent      boolean
 )
-returns text
+returns json
 language plpgsql
 volatile
 security definer
@@ -317,13 +357,19 @@ set search_path = public
 as $$
 declare
   v_phone text := regexp_replace(coalesce(p_parent_phone, ''), '\D', '', 'g');
-  v_code  text;
+  v_fee   integer;
+  v_row   registrations%rowtype;
 begin
   if length(v_phone) = 11 and left(v_phone, 3) = '976' then
     v_phone := right(v_phone, 8);
   end if;
   if coalesce(p_consent, false) is not true then
     raise exception 'consent_required';
+  end if;
+  -- Төлбөрийг сервер тогтооно: 14-р сургуулийн сурагч 100,000₮, бусад 250,000₮.
+  v_fee := case p_school_type when '14' then 100000 when 'other' then 250000 end;
+  if v_fee is null then
+    raise exception 'school_type_required';
   end if;
   if (select count(*) from registrations
         where parent_phone = v_phone and created_at > now() - interval '24 hours') >= 5
@@ -333,20 +379,30 @@ begin
   end if;
 
   insert into registrations
-    (child_name, child_age, school_grade, parent_name, parent_phone, shift, experience, note, consent_data)
+    (child_name, child_age, school_type, monthly_fee, school_grade, parent_name, parent_phone,
+     shift, experience, note, consent_data)
   values
-    (btrim(p_child_name), p_child_age, nullif(btrim(p_school_grade), ''), btrim(p_parent_name),
-     v_phone, p_shift, nullif(p_experience, ''), nullif(btrim(p_note), ''), true)
-  returning ref_code into v_code;
+    (btrim(p_child_name), p_child_age, p_school_type, v_fee, nullif(btrim(p_school_grade), ''),
+     btrim(p_parent_name), v_phone, p_shift, nullif(p_experience, ''), nullif(btrim(p_note), ''), true)
+  returning * into v_row;
 
-  return v_code;
+  return json_build_object(
+    'code', v_row.ref_code,
+    'fee', v_row.monthly_fee,
+    'shift', v_row.shift,
+    'start_date', v_row.start_date,
+    'period_end', public.billing_period(v_row.start_date, 1) - 1,
+    'next_due', public.billing_period(v_row.start_date, 1)
+  );
 end;
 $$;
 
--- Эцэг эх кодоо болон утсаа оруулж төлөв, баталгаажсан саруудаа харна.
+-- Эцэг эх кодоо болон утсаа оруулж төлөв, баталгаажсан үеүдээ харна.
 -- Хүүхдийн нэр, бусад мэдээллийг буцаахгүй.
+drop function if exists public.registration_status(text, text);
 create or replace function public.registration_status(p_code text, p_phone text)
-returns table (status text, shift text, paid_months date[])
+returns table (status text, shift text, monthly_fee integer, start_date date,
+               paid_periods date[], next_due date)
 language sql
 stable
 security definer
@@ -354,15 +410,17 @@ set search_path = public
 as $$
   select r.status,
          r.shift,
-         coalesce(array_agg(p.month order by p.month) filter (where p.month is not null), '{}')
+         r.monthly_fee,
+         r.start_date,
+         coalesce((select array_agg(p.period_start order by p.period_start)
+                   from payments p where p.registration_id = r.id), '{}'),
+         public.next_due_date(r.id)
   from registrations r
-  left join payments p on p.registration_id = r.id
   where r.ref_code = upper(btrim(p_code))
-    and r.parent_phone = right(regexp_replace(coalesce(p_phone, ''), '\D', '', 'g'), 8)
-  group by r.id;
+    and r.parent_phone = right(regexp_replace(coalesce(p_phone, ''), '\D', '', 'g'), 8);
 $$;
 
-revoke all on function public.submit_registration(text, integer, text, text, text, text, text, text, boolean) from public;
+revoke all on function public.submit_registration(text, integer, text, text, text, text, text, text, text, boolean) from public;
 revoke all on function public.registration_status(text, text) from public;
-grant execute on function public.submit_registration(text, integer, text, text, text, text, text, text, boolean) to anon, authenticated;
+grant execute on function public.submit_registration(text, integer, text, text, text, text, text, text, text, boolean) to anon, authenticated;
 grant execute on function public.registration_status(text, text) to anon, authenticated;

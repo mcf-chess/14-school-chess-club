@@ -176,7 +176,7 @@
       Backend.list('athletes', 'select=*&order=full_name.asc'),
       Backend.list('achievements', 'select=*&order=event_date.desc.nullslast,created_at.desc'),
       Backend.list('registrations', 'select=*&order=created_at.desc'),
-      Backend.list('payments', 'select=*&order=month.desc'),
+      Backend.list('payments', 'select=*&order=period_start.asc'),
     ]);
     renderAthletes();
     renderAchievementFilter();
@@ -810,31 +810,76 @@
 
   /* 5. Бүртгэл, сарын төлбөр ---------------------------------------------- */
 
-  const SHIFTS = ['10:00–11:30', '12:00–13:30', '14:00–16:00'];
+  /*
+    Төлбөрийн сар хүүхэд бүрийн эхэлсэн өдрөөс (start_date) тоологдоно:
+    11/22-нд эхэлсэн бол 11/22–12/21 эхний сар, дараагийн сар 12/22-нд эхэлнэ.
+    Огнооны тооцоо сервер дээрх billing_period()-тэй адил.
+  */
   const STATUSES = ['Шинэ', 'Идэвхтэй', 'Түр зогссон', 'Гарсан'];
-  const DEFAULT_FEE = 100000;
+  const FEES = (typeof CLUB !== 'undefined' && CLUB.feeBySchool) || { 14: 100000, other: 250000 };
 
-  const pad = (n) => String(n).padStart(2, '0');
-  const today = () => {
-    const now = new Date();
-    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  const today = () =>
+    new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ulaanbaatar' }).format(new Date());
+  const dateLabel = (iso) => (iso ? String(iso).slice(0, 10).replace(/-/g, '.') : '');
+  const money = (n) => `${Number(n).toLocaleString('en-US')}₮`;
+
+  function addMonths(iso, k) {
+    const [y, m, d] = String(iso).slice(0, 10).split('-').map(Number);
+    const target = new Date(Date.UTC(y, m - 1 + k, 1));
+    const last = new Date(Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0)).getUTCDate();
+    target.setUTCDate(Math.min(d, last));
+    return target.toISOString().slice(0, 10);
+  }
+  const dayBefore = (iso) => {
+    const date = new Date(iso + 'T00:00:00Z');
+    date.setUTCDate(date.getUTCDate() - 1);
+    return date.toISOString().slice(0, 10);
   };
+  const periodLabel = (r, k) =>
+    `${dateLabel(addMonths(r.start_date, k))} – ${dateLabel(dayBefore(addMonths(r.start_date, k + 1)))}`;
+
+  // Төлбөрийн үеийн эхлэх өдрөөс «2026.11.22 – 2026.12.21» гэсэн шошго.
+  function labelFor(r, periodStart) {
+    for (let k = 0; k < 240; k += 1) {
+      if (addMonths(r.start_date, k) === periodStart) return periodLabel(r, k);
+    }
+    return dateLabel(periodStart);
+  }
+
+  const paymentsOf = (r) =>
+    payments
+      .filter((p) => p.registration_id === r.id)
+      .sort((x, y) => x.period_start.localeCompare(y.period_start));
+  const isPaid = (r, k) => payments.some((p) => p.registration_id === r.id && p.period_start === addMonths(r.start_date, k));
+
+  // Өнөөдөр аль үе явж байгаа (эхлээгүй бол 0).
+  function currentIndex(r) {
+    const now = today();
+    let k = 0;
+    while (k < 240 && addMonths(r.start_date, k + 1) <= now) k += 1;
+    return k;
+  }
+  function firstUnpaid(r) {
+    let k = 0;
+    while (k < 240 && isPaid(r, k)) k += 1;
+    return k;
+  }
+  // Идэвхтэй хүүхдийн төлөгдөөгүй үе эхэлсэн бол хугацаа нь болсон гэж үзнэ.
+  const isDue = (r) => r.status === 'Идэвхтэй' && addMonths(r.start_date, firstUnpaid(r)) <= today();
+
   const monthInput = $('pay-month');
   monthInput.value = today().slice(0, 7);
-
-  const selectedMonth = () => (monthInput.value || today().slice(0, 7)) + '-01';
-  const monthLabel = (iso) => `${iso.slice(0, 4)} оны ${Number(iso.slice(5, 7))}-р сар`;
-  const money = (n) => `${Number(n).toLocaleString('en-US')}₮`;
-  const paymentFor = (registrationId, month) =>
-    payments.find((p) => p.registration_id === registrationId && p.month === month);
+  const revenueMonth = () => monthInput.value || today().slice(0, 7);
+  const monthName = (ym) => `${ym.slice(0, 4)} оны ${Number(ym.slice(5, 7))}-р сар`;
+  // Орлогыг мөнгө орсон өдрөөр (байхгүй бол баталгаажуулсан өдрөөр) тоолно.
+  const receivedOn = (p) => p.paid_on || p.confirmed_at.slice(0, 10);
 
   function visibleRegistrations() {
     const filter = $('reg-filter').value;
     const query = $('reg-search').value.trim().toLowerCase();
-    const month = selectedMonth();
     return registrations.filter((r) => {
       if (filter === '' && r.status === 'Гарсан') return false;
-      if (filter === 'unpaid' && (r.status !== 'Идэвхтэй' || paymentFor(r.id, month))) return false;
+      if (filter === 'due' && !isDue(r)) return false;
       if (STATUSES.includes(filter) && r.status !== filter) return false;
       if (!query) return true;
       return [r.child_name, r.parent_name, r.parent_phone, r.ref_code]
@@ -844,12 +889,12 @@
   }
 
   function renderSummary() {
-    const month = selectedMonth();
+    const month = revenueMonth();
     const active = registrations.filter((r) => r.status === 'Идэвхтэй');
-    const monthPayments = payments.filter((p) => p.month === month);
-    const unpaid = active.filter((r) => !paymentFor(r.id, month)).length;
+    const received = payments.filter((p) => receivedOn(p).startsWith(month));
+    const total = received.reduce((sum, p) => sum + p.amount, 0);
+    const due = registrations.filter(isDue).length;
     const fresh = registrations.filter((r) => r.status === 'Шинэ').length;
-    const total = monthPayments.reduce((sum, p) => sum + p.amount, 0);
 
     const tile = (value, label, kind = '') => {
       const box = createElement('div', null, 'reg-tile ' + kind);
@@ -858,21 +903,22 @@
     };
     const tiles = createElement('div', null, 'reg-tiles');
     tiles.append(
-      tile(monthPayments.length, `${monthLabel(month)} төлсөн`),
-      tile(money(total), 'Баталгаажсан орлого'),
-      tile(unpaid, 'Идэвхтэй, төлөөгүй', unpaid > 0 ? 'is-warn' : ''),
+      tile(active.length, 'Идэвхтэй хүүхэд'),
+      tile(due, 'Төлөх хугацаа болсон', due > 0 ? 'is-warn' : ''),
+      tile(money(total), `${monthName(month)} орсон орлого`),
       tile(fresh, 'Шинэ бүртгэл', fresh > 0 ? 'is-new' : ''),
     );
     const shifts = createElement('p', null, 'admin-hint');
     shifts.textContent =
-      'Идэвхтэй хүүхэд: ' +
-      SHIFTS.map((shift) => `${shift} — ${active.filter((r) => r.shift === shift).length}`).join(', ');
+      'Идэвхтэй хүүхэд ээлжээр: ' +
+      ['10:00–11:30', '12:00–13:30', '14:00–16:00']
+        .map((shift) => `${shift} — ${active.filter((r) => r.shift === shift).length}`)
+        .join(', ');
     $('reg-summary').replaceChildren(tiles, shifts);
   }
 
   function renderRegistrations() {
     renderSummary();
-    const month = selectedMonth();
     const visible = visibleRegistrations();
 
     if (visible.length === 0) {
@@ -891,12 +937,11 @@
       ...visible.map((r) => {
         const row = createElement('li', null, 'admin-row');
         const info = document.createElement('div');
-
-        const title = createElement('strong', r.child_name);
-        info.append(title, createElement('span', r.ref_code, 'reg-code'));
+        info.append(createElement('strong', r.child_name), createElement('span', r.ref_code, 'reg-code'));
 
         const details = [
           r.child_age != null && `${r.child_age} настай`,
+          r.school_type === '14' ? '14-р сургууль' : 'Бусад сургууль',
           r.school_grade,
           r.experience,
           `Ээлж ${r.shift}`,
@@ -907,18 +952,24 @@
         parent.append(`${r.parent_name}: `);
         const phone = createElement('a', r.parent_phone);
         phone.href = 'tel:+976' + r.parent_phone;
-        parent.append(phone, `. Бүртгүүлсэн ${r.created_at.slice(0, 10)}`);
+        parent.append(phone, `. Эхэлсэн ${dateLabel(r.start_date)}, сарын төлбөр ${money(r.monthly_fee)}`);
         info.append(parent);
         if (r.note) info.append(createElement('p', `Эцэг эхийн тэмдэглэл: ${r.note}`, 'admin-hint'));
+        if (r.admin_note) info.append(createElement('p', `Тэмдэглэл: ${r.admin_note}`, 'admin-hint'));
 
-        const paid = paymentFor(r.id, month);
+        const paid = paymentsOf(r);
+        const next = addMonths(r.start_date, firstUnpaid(r));
         const badges = createElement('p', null, 'admin-badges');
         const statusKind = { Шинэ: 'is-warn', Идэвхтэй: 'is-live', 'Түр зогссон': 'is-draft', Гарсан: 'is-draft' };
         badges.append(badge(r.status, statusKind[r.status]));
+        if (paid.length > 0) {
+          const last = paid[paid.length - 1];
+          badges.append(badge(`Сүүлд төлсөн сар: ${labelFor(r, last.period_start)}`, 'is-ok'));
+        }
         badges.append(
-          paid
-            ? badge(`${monthLabel(month)}: төлсөн ${money(paid.amount)}`, 'is-ok')
-            : badge(`${monthLabel(month)}: төлөөгүй`, 'is-warn'),
+          next <= today()
+            ? badge(`Төлөх хугацаа болсон: ${dateLabel(next)}`, 'is-warn')
+            : badge(`Дараагийн төлбөр: ${dateLabel(next)}`, 'is-draft'),
         );
         info.append(badges);
 
@@ -946,14 +997,14 @@
           }
         });
 
-        actions.append(statusSelect);
-        if (paid) {
+        actions.append(
+          statusSelect,
+          createButton('Төлбөр баталгаажуулах', 'button gold', () => openPaymentForm(r)),
+          createButton('Засах', 'admin-button', () => openRegistrationForm(r)),
+        );
+        if (paid.length > 0) {
           actions.append(
-            createButton('Төлбөр цуцлах', 'admin-button', () => cancelPayment(r, paid)),
-          );
-        } else {
-          actions.append(
-            createButton('Төлбөр баталгаажуулах', 'button gold', () => openPaymentForm(r)),
+            createButton('Сүүлийн төлбөр цуцлах', 'admin-button', () => cancelPayment(r, paid[paid.length - 1])),
           );
         }
         actions.append(createButton('Устгах', 'admin-button is-danger', () => deleteRegistration(r)));
@@ -968,19 +1019,31 @@
   $('reg-filter').addEventListener('change', renderRegistrations);
   $('reg-search').addEventListener('input', renderRegistrations);
 
+  /* Төлбөр баталгаажуулах цонх */
+
   const paymentDialog = $('payment-dialog');
   const paymentForm = $('payment-form');
   let paymentTarget = null;
 
-  function openPaymentForm(registration) {
-    paymentTarget = registration;
+  function openPaymentForm(r) {
+    paymentTarget = r;
     paymentForm.reset();
     $('payment-form-error').textContent = '';
-    $('payment-who').textContent = `${registration.child_name} (${registration.ref_code}), ээлж ${registration.shift}`;
-    $('payment-month').value = selectedMonth().slice(0, 7);
-    $('payment-amount').value = DEFAULT_FEE;
+    $('payment-who').textContent = `${r.child_name} (${r.ref_code}), ээлж ${r.shift}`;
+
+    // Төлөгдөөгүй үеүд: эхнийхээс одоогийн үеийн дараагийнх хүртэл.
+    const select = $('payment-period');
+    select.replaceChildren();
+    const last = Math.max(currentIndex(r) + 1, firstUnpaid(r));
+    for (let k = 0; k <= last; k += 1) {
+      if (isPaid(r, k)) continue;
+      const option = createElement('option', periodLabel(r, k));
+      option.value = addMonths(r.start_date, k);
+      select.append(option);
+    }
+    $('payment-amount').value = r.monthly_fee;
     $('payment-date').value = today();
-    $('payment-ref').value = registration.ref_code;
+    $('payment-ref').value = r.ref_code;
     paymentDialog.showModal();
     $('payment-date').focus();
   }
@@ -988,22 +1051,22 @@
   paymentForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     const errorBox = $('payment-form-error');
-    const month = $('payment-month').value;
+    const period = $('payment-period').value;
     const amount = Number($('payment-amount').value);
-    if (!/^\d{4}-\d{2}$/.test(month)) return (errorBox.textContent = 'Сараа сонгоно уу.');
+    if (!period) return (errorBox.textContent = 'Төлбөрийн сараа сонгоно уу.');
     if (!Number.isInteger(amount) || amount <= 0) return (errorBox.textContent = 'Дүнг зөв бичнэ үү.');
 
     await withBusy($('payment-save'), async () => {
       try {
         const saved = await Backend.insert('payments', {
           registration_id: paymentTarget.id,
-          month: month + '-01',
+          period_start: period,
           amount,
           paid_on: $('payment-date').value || null,
           bank_ref: emptyToNull($('payment-ref').value),
           note: emptyToNull($('payment-note').value),
         });
-        payments.unshift(saved);
+        payments.push(saved);
         // Анх төлбөр төлсөн шинэ бүртгэлийг идэвхтэй болгоно.
         if (paymentTarget.status === 'Шинэ') {
           Object.assign(
@@ -1012,7 +1075,7 @@
           );
         }
         paymentDialog.close();
-        showStatus(`${paymentTarget.child_name}: ${monthLabel(saved.month)}ын төлбөр баталгаажлаа.`);
+        showStatus(`${paymentTarget.child_name}: төлбөр баталгаажлаа (${labelFor(paymentTarget, saved.period_start)}).`);
         renderRegistrations();
       } catch (error) {
         errorBox.textContent = error?.message || String(error);
@@ -1020,9 +1083,9 @@
     });
   });
 
-  async function cancelPayment(registration, payment) {
+  async function cancelPayment(r, payment) {
     const ok = await confirmDelete(
-      `${registration.child_name}-ийн ${monthLabel(payment.month)}ын баталгаажуулалтыг цуцлах уу? Эцэг эхэд «төлөөгүй» гэж харагдана.`,
+      `${r.child_name}: ${labelFor(r, payment.period_start)} сарын төлбөрийн баталгаажуулалтыг цуцлах уу? Эцэг эхэд «төлөөгүй» гэж харагдана.`,
     );
     if (!ok) return;
     try {
@@ -1035,15 +1098,66 @@
     }
   }
 
-  async function deleteRegistration(registration) {
+  /* Бүртгэл засах цонх */
+
+  const registrationDialog = $('registration-dialog');
+  const registrationForm = $('registration-form');
+  let registrationTarget = null;
+
+  function openRegistrationForm(r) {
+    registrationTarget = r;
+    $('registration-form-error').textContent = '';
+    $('registration-who').textContent = `${r.child_name} (${r.ref_code})`;
+    $('edit-shift').value = r.shift;
+    $('edit-school').value = r.school_type;
+    $('edit-fee').value = r.monthly_fee;
+    $('edit-start').value = r.start_date;
+    $('edit-note').value = r.admin_note || '';
+    registrationDialog.showModal();
+  }
+
+  // Сургууль солиход стандарт төлбөрийг санал болгоно (гараар өөрчилж болно).
+  $('edit-school').addEventListener('change', () => {
+    $('edit-fee').value = FEES[$('edit-school').value];
+  });
+
+  registrationForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const errorBox = $('registration-form-error');
+    const fee = Number($('edit-fee').value);
+    if (!Number.isInteger(fee) || fee <= 0) return (errorBox.textContent = 'Сарын төлбөрийг зөв бичнэ үү.');
+    if (!$('edit-start').value) return (errorBox.textContent = 'Эхэлсэн өдрийг сонгоно уу.');
+
+    await withBusy($('registration-save'), async () => {
+      try {
+        Object.assign(
+          registrationTarget,
+          await Backend.update('registrations', registrationTarget.id, {
+            shift: $('edit-shift').value,
+            school_type: $('edit-school').value,
+            monthly_fee: fee,
+            start_date: $('edit-start').value,
+            admin_note: emptyToNull($('edit-note').value),
+          }),
+        );
+        registrationDialog.close();
+        showStatus(`${registrationTarget.child_name}: бүртгэл шинэчлэгдлээ.`);
+        renderRegistrations();
+      } catch (error) {
+        errorBox.textContent = error?.message || String(error);
+      }
+    });
+  });
+
+  async function deleteRegistration(r) {
     const ok = await confirmDelete(
-      `${registration.child_name} (${registration.ref_code})-ийн бүртгэл болон бүх төлбөрийн бичлэгийг бүрмөсөн устгах уу? Буцаах боломжгүй.`,
+      `${r.child_name} (${r.ref_code})-ийн бүртгэл болон бүх төлбөрийн бичлэгийг бүрмөсөн устгах уу? Буцаах боломжгүй.`,
     );
     if (!ok) return;
     try {
-      await Backend.remove('registrations', registration.id);
-      registrations = registrations.filter((r) => r.id !== registration.id);
-      payments = payments.filter((p) => p.registration_id !== registration.id);
+      await Backend.remove('registrations', r.id);
+      registrations = registrations.filter((x) => x.id !== r.id);
+      payments = payments.filter((p) => p.registration_id !== r.id);
       showStatus('Бүртгэлийг устгалаа.');
       renderRegistrations();
     } catch (error) {
@@ -1053,26 +1167,24 @@
 
   // Харагдаж буй жагсаалтыг Excel / Sheets-д нээгдэх CSV болгон татна.
   $('reg-export').addEventListener('click', () => {
-    const month = selectedMonth();
     const header = [
-      'Код', 'Хүүхдийн нэр', 'Нас', 'Сургууль, анги', 'Мэдлэг', 'Ээлж', 'Эцэг/эх',
-      'Утас', 'Төлөв', 'Бүртгүүлсэн', `${monthLabel(month)} төлбөр`, 'Төлсөн өдөр',
+      'Код', 'Хүүхдийн нэр', 'Нас', 'Сургууль', 'Анги', 'Мэдлэг', 'Ээлж', 'Эцэг/эх', 'Утас',
+      'Төлөв', 'Сарын төлбөр', 'Эхэлсэн', 'Төлсөн сарын тоо', 'Дараагийн төлбөр',
     ];
     const cell = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
-    const lines = visibleRegistrations().map((r) => {
-      const paid = paymentFor(r.id, month);
-      return [
-        r.ref_code, r.child_name, r.child_age, r.school_grade, r.experience, r.shift,
-        r.parent_name, r.parent_phone, r.status, r.created_at.slice(0, 10),
-        paid ? paid.amount : '', paid ? paid.paid_on : '',
-      ].map(cell).join(',');
-    });
+    const lines = visibleRegistrations().map((r) =>
+      [
+        r.ref_code, r.child_name, r.child_age, r.school_type === '14' ? '14-р сургууль' : 'Бусад',
+        r.school_grade, r.experience, r.shift, r.parent_name, r.parent_phone, r.status,
+        r.monthly_fee, r.start_date, paymentsOf(r).length, addMonths(r.start_date, firstUnpaid(r)),
+      ].map(cell).join(','),
+    );
     const blob = new Blob(['﻿' + [header.map(cell).join(','), ...lines].join('\r\n')], {
       type: 'text/csv;charset=utf-8',
     });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `burtgel-${month.slice(0, 7)}.csv`;
+    link.download = `burtgel-${today()}.csv`;
     link.click();
     setTimeout(() => URL.revokeObjectURL(link.href), 1000);
   });

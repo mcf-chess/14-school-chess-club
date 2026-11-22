@@ -25,10 +25,32 @@
     return node;
   };
 
-  const monthLabel = (iso) => {
-    const [year, month] = String(iso).split('-');
-    return `${year} оны ${Number(month)}-р сар`;
+  // Огноо: 2026-11-22 → 2026.11.22
+  const dateLabel = (iso) => String(iso).slice(0, 10).replace(/-/g, '.');
+  const money = (n) => `${Number(n).toLocaleString('en-US')}₮`;
+
+  // Сервертэй адил: эхлэх өдрөөс k сарын дараах өдөр (сарын сүүлд таацуулна).
+  function addMonths(iso, k) {
+    const [y, m, d] = String(iso).slice(0, 10).split('-').map(Number);
+    const target = new Date(Date.UTC(y, m - 1 + k, 1));
+    const last = new Date(Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0)).getUTCDate();
+    target.setUTCDate(Math.min(d, last));
+    return target.toISOString().slice(0, 10);
+  }
+  const dayBefore = (iso) => {
+    const date = new Date(iso + 'T00:00:00Z');
+    date.setUTCDate(date.getUTCDate() - 1);
+    return date.toISOString().slice(0, 10);
   };
+  // Эхлэх өдрөөс тоолсон үеийн дуусах өдөр.
+  function periodEnd(startDate, periodStart) {
+    for (let k = 0; k < 240; k += 1) {
+      if (addMonths(startDate, k) === periodStart) return dayBefore(addMonths(startDate, k + 1));
+    }
+    return null;
+  }
+  const todayUB = () =>
+    new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ulaanbaatar' }).format(new Date());
 
   const digits = (value) => value.replace(/\D/g, '').replace(/^976(?=\d{8}$)/, '');
 
@@ -90,6 +112,7 @@
     const phone = digits(String(data.get('phone') || ''));
     const checks = [
       [child.length >= 2, 'reg-child', 'Хүүхдийн овог, нэрийг бичнэ үү.'],
+      [data.get('school'), 'school', 'Аль сургуулийн сурагч болохыг сонгоно уу.'],
       [Number.isInteger(age) && age >= 3 && age <= 18, 'reg-age', 'Хүүхдийн насыг 3–18 хооронд бичнэ үү.'],
       [data.get('experience'), 'reg-experience', 'Шатрын мэдлэгийг сонгоно уу.'],
       [data.get('shift'), null, 'Хүссэн ээлжээ сонгоно уу.'],
@@ -100,8 +123,8 @@
     form.querySelectorAll('[aria-invalid]').forEach((node) => node.removeAttribute('aria-invalid'));
     for (const [ok, id, message] of checks) {
       if (!ok) {
-        const field = id ? $(id) : form.querySelector('input[name="shift"]');
-        if (id) field.setAttribute('aria-invalid', 'true');
+        const field = $(id) || form.querySelector(`input[name="${id || 'shift'}"]`);
+        if ($(id)) field.setAttribute('aria-invalid', 'true');
         field.focus();
         return { error: message };
       }
@@ -110,6 +133,7 @@
       args: {
         p_child_name: child,
         p_child_age: age,
+        p_school_type: data.get('school'),
         p_school_grade: String(data.get('grade') || '').trim(),
         p_parent_name: parent,
         p_parent_phone: phone,
@@ -133,8 +157,8 @@
     submit.disabled = true;
     submit.textContent = 'Илгээж байна…';
     try {
-      const code = await Backend.callPublic('submit_registration', result.args);
-      showDone(String(code));
+      const done = await Backend.callPublic('submit_registration', result.args);
+      showDone(done);
     } catch (error) {
       errorLine.textContent = error?.message || 'Алдаа гарлаа. Дахин оролдоно уу.';
     } finally {
@@ -143,11 +167,26 @@
     }
   });
 
-  function showDone(code) {
+  function showDone(done) {
+    const code = String(done.code);
     $('done-code').textContent = code;
-    const payment = $('done-payment');
-    payment.replaceChildren(
-      el('p', `Сарын төлбөр ${club.fee || '100,000₮'}-ийг доорх дансанд шилжүүлнэ үү.`),
+
+    const summary = $('done-summary');
+    summary.replaceChildren();
+    const add = (term, value, className) => {
+      const row = document.createElement('div');
+      if (className) row.className = className;
+      row.append(el('dt', term), el('dd', value));
+      summary.append(row);
+    };
+    add('Төлөх дүн', `${money(done.fee)} / сар`, 'is-amount');
+    add('Хичээллэх өдөр', `${club.days || 'Бямба, Ням'} гараг`);
+    add('Цаг', done.shift);
+    add('Эхний сар', `${dateLabel(done.start_date)} – ${dateLabel(done.period_end)}`);
+    add('Дараагийн төлбөр', dateLabel(done.next_due));
+
+    $('done-payment').replaceChildren(
+      el('p', `Эхний сарын ${money(done.fee)}-ийг доорх дансанд шилжүүлнэ үү.`),
       bankDetails(code),
     );
     form.hidden = true;
@@ -155,6 +194,15 @@
     $('register-done').focus();
     $('status-code').value = code;
   }
+
+  // Сургуулиас хамаарч ангийн талбарын шошгыг солино.
+  form.querySelectorAll('input[name="school"]').forEach((radio) => {
+    radio.addEventListener('change', () => {
+      const other = radio.value === 'other';
+      $('reg-grade-label').firstChild.textContent = other ? 'Сургууль, анги ' : 'Анги ';
+      $('reg-grade').placeholder = other ? '23-р сургууль, 3б' : '3б';
+    });
+  });
 
   $('copy-code').addEventListener('click', async () => {
     const status = $('copy-code-status');
@@ -200,15 +248,34 @@
       }
       const row = rows[0];
       const box = el('div', null, 'status-box');
-      box.append(el('p', `Төлөв: ${row.status}`), el('p', `Ээлж: ${row.shift}`));
-      const months = row.paid_months || [];
-      if (months.length === 0) {
+      box.append(
+        el('p', `Төлөв: ${row.status}`),
+        el('p', `Ээлж: ${club.days || 'Бямба, Ням'} гараг, ${row.shift}`),
+        el('p', `Сарын төлбөр: ${money(row.monthly_fee)}`),
+      );
+      const periods = row.paid_periods || [];
+      if (periods.length === 0) {
         box.append(el('p', 'Баталгаажсан төлбөр одоогоор алга. Шилжүүлсэн бол багш шалгаад баталгаажуулна.'));
       } else {
         box.append(el('p', 'Баталгаажсан төлбөр:'));
         const list = el('ul', null, 'paid-list');
-        months.forEach((month) => list.append(el('li', monthLabel(month))));
+        periods.forEach((start) => {
+          const end = periodEnd(row.start_date, start);
+          list.append(el('li', end ? `${dateLabel(start)} – ${dateLabel(end)}` : dateLabel(start)));
+        });
         box.append(list);
+      }
+      if (row.next_due) {
+        const overdue = row.next_due <= todayUB();
+        box.append(
+          el(
+            'p',
+            overdue
+              ? `Төлөх хугацаа болсон. Сар эхлэх өдөр ${dateLabel(row.next_due)}, дүн ${money(row.monthly_fee)}`
+              : `Дараагийн төлбөр: ${dateLabel(row.next_due)}, ${money(row.monthly_fee)}`,
+            overdue ? 'status-due' : 'status-next',
+          ),
+        );
       }
       statusResult.replaceChildren(box);
     } catch (error) {

@@ -26,6 +26,7 @@
     <script src="js/theme.js"></script>
 
     <!-- Серверийн тохиргоо ба админы үйлдлүүд -->
+    <script src="js/site-config.js" defer></script>
     <script src="js/backend-config.js" defer></script>
     <script src="js/backend.js" defer></script>
     <script src="js/admin.js" defer></script>
@@ -182,14 +183,14 @@
         <section id="panel-registrations" role="tabpanel" aria-labelledby="tab-registrations" hidden>
           <div class="admin-toolbar">
             <div class="admin-search">
-              <label for="pay-month">Сар</label>
+              <label for="pay-month">Орлогын сар</label>
               <input id="pay-month" type="month" />
             </div>
             <div class="admin-search">
               <label for="reg-filter">Шүүх</label>
               <select id="reg-filter">
                 <option value="">Гарснаас бусад</option>
-                <option value="unpaid">Энэ сард төлөөгүй (идэвхтэй)</option>
+                <option value="due">Төлөх хугацаа болсон</option>
                 <option value="Шинэ">Шинэ бүртгэл</option>
                 <option value="Идэвхтэй">Идэвхтэй</option>
                 <option value="Түр зогссон">Түр зогссон</option>
@@ -207,7 +208,8 @@
           <div id="reg-summary" class="reg-summary" aria-live="polite"></div>
           <p class="admin-hint">
             Банкны хуулгаас гүйлгээний утга дахь кодыг (жишээ нь CH0001) хайж, тухайн хүүхдийн
-            «Төлбөр баталгаажуулах» товчийг дарна. Эцэг эх кодоороо төлөвөө сайтаас харна.
+            «Төлбөр баталгаажуулах» товчийг дарна. Төлбөрийн сар хүүхэд бүрийн эхэлсэн өдрөөс
+            тоологдоно. Эцэг эх кодоороо төлөвөө сайтаас харна.
           </p>
           <ul id="reg-rows" class="admin-rows"></ul>
         </section>
@@ -493,8 +495,8 @@
 
         <div class="admin-grid">
           <div>
-            <label for="payment-month">Аль сарын төлбөр</label>
-            <input id="payment-month" name="month" type="month" required />
+            <label for="payment-period">Аль сарын төлбөр</label>
+            <select id="payment-period" name="period" required></select>
           </div>
           <div>
             <label for="payment-amount">Дүн (₮)</label>
@@ -521,6 +523,54 @@
 
         <div class="admin-actions">
           <button id="payment-save" class="button gold" type="submit">Баталгаажуулах</button>
+          <button class="admin-button" type="button" data-close-dialog>Болих</button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- Бүртгэл засах -->
+    <dialog id="registration-dialog" class="admin-dialog" aria-labelledby="registration-dialog-title">
+      <form id="registration-form" class="admin-form" method="dialog" novalidate>
+        <h2 id="registration-dialog-title" class="as-h3">Бүртгэл засах</h2>
+        <p id="registration-who" class="admin-hint"></p>
+        <p id="registration-form-error" class="admin-status is-error" role="alert"></p>
+
+        <div class="admin-grid">
+          <div>
+            <label for="edit-shift">Ээлж</label>
+            <select id="edit-shift" name="shift">
+              <option>10:00–11:30</option>
+              <option>12:00–13:30</option>
+              <option>14:00–16:00</option>
+            </select>
+          </div>
+          <div>
+            <label for="edit-school">Сургууль</label>
+            <select id="edit-school" name="school_type">
+              <option value="14">14-р сургууль</option>
+              <option value="other">Бусад сургууль</option>
+            </select>
+          </div>
+        </div>
+        <div class="admin-grid">
+          <div>
+            <label for="edit-fee">Сарын төлбөр (₮)</label>
+            <input id="edit-fee" name="monthly_fee" type="number" min="1" step="1" required />
+          </div>
+          <div>
+            <label for="edit-start">Эхэлсэн өдөр</label>
+            <input id="edit-start" name="start_date" type="date" required />
+          </div>
+        </div>
+        <p class="admin-hint">
+          Төлбөрийн сар эхэлсэн өдрөөс тоологдоно. Төлбөр баталгаажуулсан хүүхдийн эхэлсэн өдрийг
+          өөрчилбөл өмнөх төлбөрүүд шинэ үетэй таарахгүй болохыг анхаарна уу.
+        </p>
+        <label for="edit-note">Админы тэмдэглэл</label>
+        <input id="edit-note" name="admin_note" type="text" maxlength="500" />
+
+        <div class="admin-actions">
+          <button id="registration-save" class="button gold" type="submit">Хадгалах</button>
           <button class="admin-button" type="button" data-close-dialog>Болих</button>
         </div>
       </form>

@@ -176,14 +176,20 @@
                 <label for="reg-child">Овог, нэр</label>
                 <input id="reg-child" name="child" type="text" maxlength="120" autocomplete="off" required />
 
+                <span class="register-label" id="reg-school-label">Сургууль</span>
+                <div class="choice-options two" role="radiogroup" aria-labelledby="reg-school-label">
+                  <label><input type="radio" name="school" value="14" required /> <span>14-р сургуулийн сурагч<small data-club="fee">100,000₮</small></span></label>
+                  <label><input type="radio" name="school" value="other" /> <span>Бусад сургууль<small data-club="feeOther">250,000₮</small></span></label>
+                </div>
+
                 <div class="register-row">
                   <div>
                     <label for="reg-age">Нас</label>
                     <input id="reg-age" name="age" type="number" inputmode="numeric" min="3" max="18" required />
                   </div>
                   <div>
-                    <label for="reg-grade">Сургууль, анги <span class="optional">(заавал биш)</span></label>
-                    <input id="reg-grade" name="grade" type="text" maxlength="80" placeholder="14-р сургууль, 3б" />
+                    <label for="reg-grade" id="reg-grade-label">Анги <span class="optional">(заавал биш)</span></label>
+                    <input id="reg-grade" name="grade" type="text" maxlength="80" placeholder="3б" />
                   </div>
                 </div>
 
@@ -196,7 +202,7 @@
                 </select>
 
                 <span class="register-label" id="reg-shift-label">Хүссэн ээлж</span>
-                <div class="shift-options" role="radiogroup" aria-labelledby="reg-shift-label">
+                <div class="choice-options" role="radiogroup" aria-labelledby="reg-shift-label">
                   <label><input type="radio" name="shift" value="10:00–11:30" required /> <span>10:00–11:30</span></label>
                   <label><input type="radio" name="shift" value="12:00–13:30" /> <span>12:00–13:30</span></label>
                   <label><input type="radio" name="shift" value="14:00–16:00" /> <span>14:00–16:00<small>Тэмцээний бэлтгэл</small></span></label>
@@ -232,6 +238,7 @@
               <p class="ref-code"><span id="done-code"></span></p>
               <button id="copy-code" class="copy-contact" type="button">Кодыг хуулах</button>
               <p id="copy-code-status" role="status"></p>
+              <dl id="done-summary" class="done-summary"></dl>
               <div id="done-payment"></div>
               <p class="register-small">
                 Кодоо хадгалаарай. Төлбөр баталгаажсан эсэхийг доорх «Төлбөрөө шалгах» хэсгээс харна.
@@ -244,8 +251,9 @@
             <div class="register-side-block">
               <h3>Төлбөр</h3>
               <p>
-                Сарын <strong data-club="fee">100,000₮</strong>. Дансаар шилжүүлнэ. Сайт мөнгө
-                хүлээн авахгүй.
+                Сарын төлбөр 14-р сургуулийн сурагч <strong data-club="fee">100,000₮</strong>, бусад
+                сургуулийн сурагч <strong data-club="feeOther">250,000₮</strong>. Төлбөрийн сар
+                бүртгүүлсэн өдрөөс эхэлж тоологдоно. Дансаар шилжүүлнэ, сайт мөнгө хүлээн авахгүй.
               </p>
               <div id="bank-box"></div>
             </div>
@@ -297,7 +305,10 @@
             <details>
               <summary>Сургалтын төлбөр хэд вэ?</summary>
               <p>
-                Сургалтын төлбөр сарын <span data-club="feePlain">100,000 төгрөг</span>. Дансаар
+                Сургалтын төлбөр 14-р сургуулийн сурагчдад сарын
+                <span data-club="feePlain">100,000 төгрөг</span>, бусад сургуулийн сурагчдад
+                <span data-club="feeOtherPlain">250,000 төгрөг</span>. Төлбөрийн сар бүртгүүлсэн өдрөөс
+                эхэлж тоологдоно. Дансаар
                 шилжүүлэх бөгөөд гүйлгээний утгад бүртгүүлэхэд авсан кодоо бичнэ. Төлбөр орсныг багш
                 баталгаажуулна. Дэлгэрэнгүйг <span data-club="phone">+976 80344372</span> дугаараар
                 лавлаарай.
