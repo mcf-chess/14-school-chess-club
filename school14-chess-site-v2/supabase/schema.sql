@@ -218,3 +218,151 @@ drop policy if exists "Зочин зөвшөөрөлтэй зургийг үзн
 create policy "Зочин зөвшөөрөлтэй зургийг үзнэ" on storage.objects
   for select to anon, authenticated
   using (bucket_id = 'athlete-photos' and public.photo_is_public(name));
+
+-- ---------------------------------------------------------------------------
+-- 7. Хүүхдийн бүртгэл ба сарын төлбөр
+--    Эцэг эх сайтаас бүртгүүлнэ. Төлбөрийг дансаар шилжүүлнэ; сайт мөнгө хүлээн
+--    авахгүй. Мөнгө орсныг админ шалгаад «баталгаажуулна».
+--
+--    Зочин хүснэгтүүдийг шууд уншиж, бичиж ЧАДАХГҮЙ. Зөвхөн доорх хоёр функцийг дуудна:
+--      submit_registration  — шинэ бүртгэл нэмж, гүйлгээний кодыг буцаана
+--      registration_status  — код + утасны дугаараар төлөв, төлсөн саруудыг харна
+--    Хүүхдийн мэдээлэл сайтад хэзээ ч нийтлэгдэхгүй; зөвхөн админ харна.
+-- ---------------------------------------------------------------------------
+
+create sequence if not exists public.registration_code_seq start 1;
+
+create table if not exists public.registrations (
+  id            uuid primary key default gen_random_uuid(),
+  ref_code      text not null unique
+                default 'CH' || lpad(nextval('public.registration_code_seq')::text, 4, '0'),
+  child_name    text not null check (char_length(btrim(child_name)) between 2 and 120),
+  child_age     integer check (child_age between 3 and 18),
+  school_grade  text check (char_length(school_grade) <= 80),
+  parent_name   text not null check (char_length(btrim(parent_name)) between 2 and 120),
+  parent_phone  text not null check (parent_phone ~ '^[0-9]{8}$'),
+  shift         text not null check (shift in ('10:00–11:30', '12:00–13:30', '14:00–16:00')),
+  experience    text check (experience in ('Шатар мэдэхгүй', 'Нүүдлээ мэднэ', 'Тэмцээнд оролцож байсан')),
+  note          text check (char_length(note) <= 500),
+  consent_data  boolean not null check (consent_data),
+  status        text not null default 'Шинэ'
+                check (status in ('Шинэ', 'Идэвхтэй', 'Түр зогссон', 'Гарсан')),
+  admin_note    text check (char_length(admin_note) <= 500),
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now()
+);
+
+alter sequence public.registration_code_seq owned by public.registrations.ref_code;
+
+create index if not exists registrations_phone_idx on public.registrations (parent_phone);
+
+create table if not exists public.payments (
+  id              uuid primary key default gen_random_uuid(),
+  registration_id uuid not null references public.registrations (id) on delete cascade,
+  month           date not null check (extract(day from month) = 1),  -- сарын 1-ний өдөр
+  amount          integer not null check (amount between 1 and 10000000),
+  paid_on         date,
+  bank_ref        text check (char_length(bank_ref) <= 200),           -- гүйлгээний утга
+  note            text check (char_length(note) <= 300),
+  confirmed_by    uuid default auth.uid() references auth.users (id) on delete set null,
+  confirmed_at    timestamptz not null default now(),
+  unique (registration_id, month)
+);
+
+create index if not exists payments_confirmed_by_idx on public.payments (confirmed_by);
+
+drop trigger if exists registrations_touch_updated_at on public.registrations;
+create trigger registrations_touch_updated_at
+  before update on public.registrations
+  for each row execute function public.touch_updated_at();
+
+alter table public.registrations enable row level security;
+alter table public.payments      enable row level security;
+
+revoke all on public.registrations, public.payments from public, anon, authenticated;
+revoke all on sequence public.registration_code_seq from public, anon, authenticated;
+grant select, insert, update, delete on public.registrations, public.payments to authenticated;
+grant usage on sequence public.registration_code_seq to authenticated;
+
+drop policy if exists "Админ бүртгэлийг удирдана" on public.registrations;
+create policy "Админ бүртгэлийг удирдана" on public.registrations
+  for all to authenticated
+  using ((select public.is_admin()))
+  with check ((select public.is_admin()));
+
+drop policy if exists "Админ төлбөрийг удирдана" on public.payments;
+create policy "Админ төлбөрийг удирдана" on public.payments
+  for all to authenticated
+  using ((select public.is_admin()))
+  with check ((select public.is_admin()));
+
+-- Эцэг эхийн бүртгэл. Хүснэгтэд шууд бичих эрхгүй тул зөвхөн энэ функцээр орно.
+-- Нэг утаснаас 24 цагт 5, бүх сайтаас 10 минутад 30-аас олон бүртгэл хүлээн авахгүй.
+create or replace function public.submit_registration(
+  p_child_name   text,
+  p_child_age    integer,
+  p_school_grade text,
+  p_parent_name  text,
+  p_parent_phone text,
+  p_shift        text,
+  p_experience   text,
+  p_note         text,
+  p_consent      boolean
+)
+returns text
+language plpgsql
+volatile
+security definer
+set search_path = public
+as $$
+declare
+  v_phone text := regexp_replace(coalesce(p_parent_phone, ''), '\D', '', 'g');
+  v_code  text;
+begin
+  if length(v_phone) = 11 and left(v_phone, 3) = '976' then
+    v_phone := right(v_phone, 8);
+  end if;
+  if coalesce(p_consent, false) is not true then
+    raise exception 'consent_required';
+  end if;
+  if (select count(*) from registrations
+        where parent_phone = v_phone and created_at > now() - interval '24 hours') >= 5
+     or (select count(*) from registrations
+        where created_at > now() - interval '10 minutes') >= 30 then
+    raise exception 'too_many_registrations';
+  end if;
+
+  insert into registrations
+    (child_name, child_age, school_grade, parent_name, parent_phone, shift, experience, note, consent_data)
+  values
+    (btrim(p_child_name), p_child_age, nullif(btrim(p_school_grade), ''), btrim(p_parent_name),
+     v_phone, p_shift, nullif(p_experience, ''), nullif(btrim(p_note), ''), true)
+  returning ref_code into v_code;
+
+  return v_code;
+end;
+$$;
+
+-- Эцэг эх кодоо болон утсаа оруулж төлөв, баталгаажсан саруудаа харна.
+-- Хүүхдийн нэр, бусад мэдээллийг буцаахгүй.
+create or replace function public.registration_status(p_code text, p_phone text)
+returns table (status text, shift text, paid_months date[])
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select r.status,
+         r.shift,
+         coalesce(array_agg(p.month order by p.month) filter (where p.month is not null), '{}')
+  from registrations r
+  left join payments p on p.registration_id = r.id
+  where r.ref_code = upper(btrim(p_code))
+    and r.parent_phone = right(regexp_replace(coalesce(p_phone, ''), '\D', '', 'g'), 8)
+  group by r.id;
+$$;
+
+revoke all on function public.submit_registration(text, integer, text, text, text, text, text, text, boolean) from public;
+revoke all on function public.registration_status(text, text) from public;
+grant execute on function public.submit_registration(text, integer, text, text, text, text, text, text, boolean) to anon, authenticated;
+grant execute on function public.registration_status(text, text) to anon, authenticated;

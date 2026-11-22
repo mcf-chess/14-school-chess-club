@@ -4,6 +4,7 @@
     2. Тамирчдын жагсаалт, хайлт
     3. Тамирчин нэмэх, засах, зураг солих, нийтлэх, устгах
     4. Тэмцээний амжилт нэмэх, засах, нийтлэх, устгах
+    5. Хүүхдийн бүртгэл, сарын төлбөр баталгаажуулах
 
   Энэ файл зөвхөн дэлгэцийг удирдана. Хэн юу өөрчилж чадахыг сервер шийднэ
   (supabase/schema.sql): админы жагсаалтад байхгүй хэрэглэгчийн хүсэлтийг сервер өөрөө
@@ -20,6 +21,8 @@
 
   let athletes = []; // Серверээс ирсэн бүх тамирчин (ноорог орно)
   let achievements = [];
+  let registrations = []; // Эцэг эхийн онлайн бүртгэл
+  let payments = []; // Баталгаажсан төлбөр
 
   /* Туслах функцууд -------------------------------------------------------- */
 
@@ -134,13 +137,17 @@
     achievements = [];
     $('athlete-rows').replaceChildren();
     $('achievement-rows').replaceChildren();
+    registrations = [];
+    payments = [];
+    $('reg-rows').replaceChildren();
+    $('reg-summary').replaceChildren();
     showView('login');
     showStatus('Системээс гарлаа.');
   });
 
   /* Хэсэг солих (Тамирчид / Амжилт) ---------------------------------------- */
 
-  const tabs = [$('tab-athletes'), $('tab-achievements')];
+  const tabs = [$('tab-athletes'), $('tab-achievements'), $('tab-registrations')];
 
   function showPanel(tab, { focus = false } = {}) {
     tabs.forEach((item) => {
@@ -157,20 +164,24 @@
     tab.addEventListener('keydown', (event) => {
       if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
       event.preventDefault();
-      showPanel(tabs[(index + 1) % tabs.length], { focus: true });
+      const step = event.key === 'ArrowRight' ? 1 : tabs.length - 1;
+      showPanel(tabs[(index + step) % tabs.length], { focus: true });
     });
   });
 
   /* Өгөгдөл ачаалах -------------------------------------------------------- */
 
   async function reload() {
-    [athletes, achievements] = await Promise.all([
+    [athletes, achievements, registrations, payments] = await Promise.all([
       Backend.list('athletes', 'select=*&order=full_name.asc'),
       Backend.list('achievements', 'select=*&order=event_date.desc.nullslast,created_at.desc'),
+      Backend.list('registrations', 'select=*&order=created_at.desc'),
+      Backend.list('payments', 'select=*&order=month.desc'),
     ]);
     renderAthletes();
     renderAchievementFilter();
     renderAchievements();
+    renderRegistrations();
   }
 
   /* 2. Тамирчдын жагсаалт, хайлт ------------------------------------------- */
@@ -796,6 +807,275 @@
       showError(error);
     }
   }
+
+  /* 5. Бүртгэл, сарын төлбөр ---------------------------------------------- */
+
+  const SHIFTS = ['10:00–11:30', '12:00–13:30', '14:00–16:00'];
+  const STATUSES = ['Шинэ', 'Идэвхтэй', 'Түр зогссон', 'Гарсан'];
+  const DEFAULT_FEE = 100000;
+
+  const pad = (n) => String(n).padStart(2, '0');
+  const today = () => {
+    const now = new Date();
+    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  };
+  const monthInput = $('pay-month');
+  monthInput.value = today().slice(0, 7);
+
+  const selectedMonth = () => (monthInput.value || today().slice(0, 7)) + '-01';
+  const monthLabel = (iso) => `${iso.slice(0, 4)} оны ${Number(iso.slice(5, 7))}-р сар`;
+  const money = (n) => `${Number(n).toLocaleString('en-US')}₮`;
+  const paymentFor = (registrationId, month) =>
+    payments.find((p) => p.registration_id === registrationId && p.month === month);
+
+  function visibleRegistrations() {
+    const filter = $('reg-filter').value;
+    const query = $('reg-search').value.trim().toLowerCase();
+    const month = selectedMonth();
+    return registrations.filter((r) => {
+      if (filter === '' && r.status === 'Гарсан') return false;
+      if (filter === 'unpaid' && (r.status !== 'Идэвхтэй' || paymentFor(r.id, month))) return false;
+      if (STATUSES.includes(filter) && r.status !== filter) return false;
+      if (!query) return true;
+      return [r.child_name, r.parent_name, r.parent_phone, r.ref_code]
+        .filter(Boolean)
+        .some((value) => value.toLowerCase().includes(query));
+    });
+  }
+
+  function renderSummary() {
+    const month = selectedMonth();
+    const active = registrations.filter((r) => r.status === 'Идэвхтэй');
+    const monthPayments = payments.filter((p) => p.month === month);
+    const unpaid = active.filter((r) => !paymentFor(r.id, month)).length;
+    const fresh = registrations.filter((r) => r.status === 'Шинэ').length;
+    const total = monthPayments.reduce((sum, p) => sum + p.amount, 0);
+
+    const tile = (value, label, kind = '') => {
+      const box = createElement('div', null, 'reg-tile ' + kind);
+      box.append(createElement('strong', String(value)), createElement('span', label));
+      return box;
+    };
+    const tiles = createElement('div', null, 'reg-tiles');
+    tiles.append(
+      tile(monthPayments.length, `${monthLabel(month)} төлсөн`),
+      tile(money(total), 'Баталгаажсан орлого'),
+      tile(unpaid, 'Идэвхтэй, төлөөгүй', unpaid > 0 ? 'is-warn' : ''),
+      tile(fresh, 'Шинэ бүртгэл', fresh > 0 ? 'is-new' : ''),
+    );
+    const shifts = createElement('p', null, 'admin-hint');
+    shifts.textContent =
+      'Идэвхтэй хүүхэд: ' +
+      SHIFTS.map((shift) => `${shift} — ${active.filter((r) => r.shift === shift).length}`).join(', ');
+    $('reg-summary').replaceChildren(tiles, shifts);
+  }
+
+  function renderRegistrations() {
+    renderSummary();
+    const month = selectedMonth();
+    const visible = visibleRegistrations();
+
+    if (visible.length === 0) {
+      return $('reg-rows').replaceChildren(
+        createElement(
+          'li',
+          registrations.length === 0
+            ? 'Одоогоор бүртгэл ирээгүй байна. Эцэг эх «Холбоо барих» хуудасны маягтаар бүртгүүлнэ.'
+            : 'Шүүлтүүрт тохирох бүртгэл олдсонгүй.',
+          'admin-empty',
+        ),
+      );
+    }
+
+    $('reg-rows').replaceChildren(
+      ...visible.map((r) => {
+        const row = createElement('li', null, 'admin-row');
+        const info = document.createElement('div');
+
+        const title = createElement('strong', r.child_name);
+        info.append(title, createElement('span', r.ref_code, 'reg-code'));
+
+        const details = [
+          r.child_age != null && `${r.child_age} настай`,
+          r.school_grade,
+          r.experience,
+          `Ээлж ${r.shift}`,
+        ].filter(Boolean);
+        info.append(createElement('p', details.join(', '), 'admin-hint'));
+
+        const parent = createElement('p', null, 'admin-hint');
+        parent.append(`${r.parent_name}: `);
+        const phone = createElement('a', r.parent_phone);
+        phone.href = 'tel:+976' + r.parent_phone;
+        parent.append(phone, `. Бүртгүүлсэн ${r.created_at.slice(0, 10)}`);
+        info.append(parent);
+        if (r.note) info.append(createElement('p', `Эцэг эхийн тэмдэглэл: ${r.note}`, 'admin-hint'));
+
+        const paid = paymentFor(r.id, month);
+        const badges = createElement('p', null, 'admin-badges');
+        const statusKind = { Шинэ: 'is-warn', Идэвхтэй: 'is-live', 'Түр зогссон': 'is-draft', Гарсан: 'is-draft' };
+        badges.append(badge(r.status, statusKind[r.status]));
+        badges.append(
+          paid
+            ? badge(`${monthLabel(month)}: төлсөн ${money(paid.amount)}`, 'is-ok')
+            : badge(`${monthLabel(month)}: төлөөгүй`, 'is-warn'),
+        );
+        info.append(badges);
+
+        const actions = createElement('div', null, 'admin-row-actions');
+        const statusSelect = document.createElement('select');
+        statusSelect.className = 'reg-status-select';
+        statusSelect.setAttribute('aria-label', `${r.child_name}: төлөв`);
+        STATUSES.forEach((status) => {
+          const option = createElement('option', status);
+          option.value = status;
+          option.selected = status === r.status;
+          statusSelect.append(option);
+        });
+        statusSelect.addEventListener('change', async () => {
+          statusSelect.disabled = true;
+          try {
+            Object.assign(r, await Backend.update('registrations', r.id, { status: statusSelect.value }));
+            showStatus(`${r.child_name}: төлөв «${r.status}» боллоо.`);
+            renderRegistrations();
+          } catch (error) {
+            statusSelect.value = r.status;
+            showError(error);
+          } finally {
+            statusSelect.disabled = false;
+          }
+        });
+
+        actions.append(statusSelect);
+        if (paid) {
+          actions.append(
+            createButton('Төлбөр цуцлах', 'admin-button', () => cancelPayment(r, paid)),
+          );
+        } else {
+          actions.append(
+            createButton('Төлбөр баталгаажуулах', 'button gold', () => openPaymentForm(r)),
+          );
+        }
+        actions.append(createButton('Устгах', 'admin-button is-danger', () => deleteRegistration(r)));
+
+        row.append(info, actions);
+        return row;
+      }),
+    );
+  }
+
+  monthInput.addEventListener('change', renderRegistrations);
+  $('reg-filter').addEventListener('change', renderRegistrations);
+  $('reg-search').addEventListener('input', renderRegistrations);
+
+  const paymentDialog = $('payment-dialog');
+  const paymentForm = $('payment-form');
+  let paymentTarget = null;
+
+  function openPaymentForm(registration) {
+    paymentTarget = registration;
+    paymentForm.reset();
+    $('payment-form-error').textContent = '';
+    $('payment-who').textContent = `${registration.child_name} (${registration.ref_code}), ээлж ${registration.shift}`;
+    $('payment-month').value = selectedMonth().slice(0, 7);
+    $('payment-amount').value = DEFAULT_FEE;
+    $('payment-date').value = today();
+    $('payment-ref').value = registration.ref_code;
+    paymentDialog.showModal();
+    $('payment-date').focus();
+  }
+
+  paymentForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const errorBox = $('payment-form-error');
+    const month = $('payment-month').value;
+    const amount = Number($('payment-amount').value);
+    if (!/^\d{4}-\d{2}$/.test(month)) return (errorBox.textContent = 'Сараа сонгоно уу.');
+    if (!Number.isInteger(amount) || amount <= 0) return (errorBox.textContent = 'Дүнг зөв бичнэ үү.');
+
+    await withBusy($('payment-save'), async () => {
+      try {
+        const saved = await Backend.insert('payments', {
+          registration_id: paymentTarget.id,
+          month: month + '-01',
+          amount,
+          paid_on: $('payment-date').value || null,
+          bank_ref: emptyToNull($('payment-ref').value),
+          note: emptyToNull($('payment-note').value),
+        });
+        payments.unshift(saved);
+        // Анх төлбөр төлсөн шинэ бүртгэлийг идэвхтэй болгоно.
+        if (paymentTarget.status === 'Шинэ') {
+          Object.assign(
+            paymentTarget,
+            await Backend.update('registrations', paymentTarget.id, { status: 'Идэвхтэй' }),
+          );
+        }
+        paymentDialog.close();
+        showStatus(`${paymentTarget.child_name}: ${monthLabel(saved.month)}ын төлбөр баталгаажлаа.`);
+        renderRegistrations();
+      } catch (error) {
+        errorBox.textContent = error?.message || String(error);
+      }
+    });
+  });
+
+  async function cancelPayment(registration, payment) {
+    const ok = await confirmDelete(
+      `${registration.child_name}-ийн ${monthLabel(payment.month)}ын баталгаажуулалтыг цуцлах уу? Эцэг эхэд «төлөөгүй» гэж харагдана.`,
+    );
+    if (!ok) return;
+    try {
+      await Backend.remove('payments', payment.id);
+      payments = payments.filter((p) => p.id !== payment.id);
+      showStatus('Төлбөрийн баталгаажуулалтыг цуцаллаа.');
+      renderRegistrations();
+    } catch (error) {
+      showError(error);
+    }
+  }
+
+  async function deleteRegistration(registration) {
+    const ok = await confirmDelete(
+      `${registration.child_name} (${registration.ref_code})-ийн бүртгэл болон бүх төлбөрийн бичлэгийг бүрмөсөн устгах уу? Буцаах боломжгүй.`,
+    );
+    if (!ok) return;
+    try {
+      await Backend.remove('registrations', registration.id);
+      registrations = registrations.filter((r) => r.id !== registration.id);
+      payments = payments.filter((p) => p.registration_id !== registration.id);
+      showStatus('Бүртгэлийг устгалаа.');
+      renderRegistrations();
+    } catch (error) {
+      showError(error);
+    }
+  }
+
+  // Харагдаж буй жагсаалтыг Excel / Sheets-д нээгдэх CSV болгон татна.
+  $('reg-export').addEventListener('click', () => {
+    const month = selectedMonth();
+    const header = [
+      'Код', 'Хүүхдийн нэр', 'Нас', 'Сургууль, анги', 'Мэдлэг', 'Ээлж', 'Эцэг/эх',
+      'Утас', 'Төлөв', 'Бүртгүүлсэн', `${monthLabel(month)} төлбөр`, 'Төлсөн өдөр',
+    ];
+    const cell = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
+    const lines = visibleRegistrations().map((r) => {
+      const paid = paymentFor(r.id, month);
+      return [
+        r.ref_code, r.child_name, r.child_age, r.school_grade, r.experience, r.shift,
+        r.parent_name, r.parent_phone, r.status, r.created_at.slice(0, 10),
+        paid ? paid.amount : '', paid ? paid.paid_on : '',
+      ].map(cell).join(',');
+    });
+    const blob = new Blob(['﻿' + [header.map(cell).join(','), ...lines].join('\r\n')], {
+      type: 'text/csv;charset=utf-8',
+    });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `burtgel-${month.slice(0, 7)}.csv`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  });
 
   /* Сайтаас «Засах» дарж ирэх --------------------------------------------- */
 

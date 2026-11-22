@@ -133,6 +133,16 @@
           >
             Тэмцээний амжилт
           </button>
+          <button
+            id="tab-registrations"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            aria-controls="panel-registrations"
+            tabindex="-1"
+          >
+            Бүртгэл, төлбөр
+          </button>
         </div>
 
         <!-- Тамирчид -->
@@ -166,6 +176,40 @@
           </div>
           <p id="achievement-count" class="admin-hint"></p>
           <ul id="achievement-rows" class="admin-rows"></ul>
+        </section>
+
+        <!-- Бүртгэл, төлбөр -->
+        <section id="panel-registrations" role="tabpanel" aria-labelledby="tab-registrations" hidden>
+          <div class="admin-toolbar">
+            <div class="admin-search">
+              <label for="pay-month">Сар</label>
+              <input id="pay-month" type="month" />
+            </div>
+            <div class="admin-search">
+              <label for="reg-filter">Шүүх</label>
+              <select id="reg-filter">
+                <option value="">Гарснаас бусад</option>
+                <option value="unpaid">Энэ сард төлөөгүй (идэвхтэй)</option>
+                <option value="Шинэ">Шинэ бүртгэл</option>
+                <option value="Идэвхтэй">Идэвхтэй</option>
+                <option value="Түр зогссон">Түр зогссон</option>
+                <option value="Гарсан">Гарсан</option>
+                <option value="all">Бүгд</option>
+              </select>
+            </div>
+            <div class="admin-search">
+              <label for="reg-search">Хайх</label>
+              <input id="reg-search" type="search" placeholder="Нэр, утас, код" />
+            </div>
+            <button id="reg-export" class="admin-button" type="button">CSV татах</button>
+          </div>
+
+          <div id="reg-summary" class="reg-summary" aria-live="polite"></div>
+          <p class="admin-hint">
+            Банкны хуулгаас гүйлгээний утга дахь кодыг (жишээ нь CH0001) хайж, тухайн хүүхдийн
+            «Төлбөр баталгаажуулах» товчийг дарна. Эцэг эх кодоороо төлөвөө сайтаас харна.
+          </p>
+          <ul id="reg-rows" class="admin-rows"></ul>
         </section>
       </div>
     </main>
@@ -435,6 +479,48 @@
 
         <div class="admin-actions">
           <button id="achievement-save" class="button gold" type="submit">Хадгалах</button>
+          <button class="admin-button" type="button" data-close-dialog>Болих</button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- Төлбөр баталгаажуулах -->
+    <dialog id="payment-dialog" class="admin-dialog" aria-labelledby="payment-dialog-title">
+      <form id="payment-form" class="admin-form" method="dialog" novalidate>
+        <h2 id="payment-dialog-title" class="as-h3">Төлбөр баталгаажуулах</h2>
+        <p id="payment-who" class="admin-hint"></p>
+        <p id="payment-form-error" class="admin-status is-error" role="alert"></p>
+
+        <div class="admin-grid">
+          <div>
+            <label for="payment-month">Аль сарын төлбөр</label>
+            <input id="payment-month" name="month" type="month" required />
+          </div>
+          <div>
+            <label for="payment-amount">Дүн (₮)</label>
+            <input id="payment-amount" name="amount" type="number" min="1" step="1" required />
+          </div>
+        </div>
+        <div class="admin-grid">
+          <div>
+            <label for="payment-date">Данс руу орсон өдөр</label>
+            <input id="payment-date" name="paid_on" type="date" />
+          </div>
+          <div>
+            <label for="payment-ref">Гүйлгээний утга</label>
+            <input id="payment-ref" name="bank_ref" type="text" maxlength="200" />
+          </div>
+        </div>
+        <label for="payment-note">Тэмдэглэл</label>
+        <input id="payment-note" name="note" type="text" maxlength="300" />
+
+        <p class="admin-hint">
+          Банкны хуулгад мөнгө орсныг өөрөө шалгасны дараа л баталгаажуулна. Хэн, хэзээ
+          баталгаажуулсан нь хадгалагдана.
+        </p>
+
+        <div class="admin-actions">
+          <button id="payment-save" class="button gold" type="submit">Баталгаажуулах</button>
           <button class="admin-button" type="button" data-close-dialog>Болих</button>
         </div>
       </form>

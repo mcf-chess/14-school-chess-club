@@ -68,6 +68,15 @@ const Backend = (() => {
     if (/publish_requires_consent/i.test(detail)) {
       return 'Мэдээлэл нийтлэх зөвшөөрөл баталгаажаагүй тамирчныг нийтлэх боломжгүй.';
     }
+    if (/too_many_registrations/.test(detail)) {
+      return 'Энэ утаснаас өнөөдөр хэт олон бүртгэл илгээсэн байна. Маргааш дахин оролдох эсвэл утсаар холбогдоно уу.';
+    }
+    if (/consent_required/.test(detail)) return 'Мэдээлэл хадгалах зөвшөөрлийг тэмдэглэнэ үү.';
+    if (/parent_phone_check/.test(detail)) return 'Утасны дугаар 8 оронтой байх ёстой.';
+    if (/payments_registration_id_month_key|duplicate key/.test(detail)) {
+      return 'Энэ хүүхдийн тухайн сарын төлбөр аль хэдийн баталгаажсан байна.';
+    }
+    if (/violates check constraint/.test(detail)) return 'Зарим талбарын утга буруу байна. Шалгаад дахин илгээнэ үү.';
     if (/mime type|not supported/i.test(detail)) return 'Энэ төрлийн файлыг хүлээн авахгүй.';
     if (/exceeded the maximum|too large/i.test(detail)) return 'Файл хэт том байна.';
     if (status >= 500) return 'Сервер түр ажиллахгүй байна. Дараа дахин оролдоно уу.';
@@ -185,6 +194,10 @@ const Backend = (() => {
   /** Нийтийн уншилт: нэвтрэлт шаардахгүй (зөвхөн public_* харагдацууд нээлттэй). */
   const readPublic = (view, query = 'select=*') => request(`/rest/v1/${view}?${query}`);
 
+  /** Нийтийн функц дуудах (бүртгүүлэх, төлөв шалгах). Сервер өөрөө шалгаж, хязгаарлана. */
+  const callPublic = (name, args) =>
+    request(`/rest/v1/rpc/${name}`, { method: 'POST', body: args });
+
   /** Админы уншилт. */
   const list = async (table, query = 'select=*') =>
     request(`/rest/v1/${table}?${query}`, { token: await accessToken() });
@@ -270,6 +283,7 @@ const Backend = (() => {
     signOut,
     isAdmin,
     readPublic,
+    callPublic,
     list,
     insert,
     update,

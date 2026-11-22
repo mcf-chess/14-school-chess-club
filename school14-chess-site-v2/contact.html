@@ -26,6 +26,9 @@
     <!-- Хуудасны үйлдлүүд -->
     <script src="js/site-config.js" defer></script>
     <script src="js/common.js" defer></script>
+    <script src="js/backend-config.js" defer></script>
+    <script src="js/backend.js" defer></script>
+    <script src="js/register.js" defer></script>
     <script src="js/admin-bar.js" defer></script>
   </head>
   <body>
@@ -128,23 +131,138 @@
           <ol>
             <li>
               <div>
-                <strong>Багштай холбогдоно</strong>
-                <p>Хүүхдийн нас, шатрын мэдлэгийн түвшнийг хэлнэ.</p>
+                <strong>Маягт бөглөнө</strong>
+                <p>Доорх маягтаар хүүхдээ бүртгүүлж, гүйлгээний кодоо авна.</p>
               </div>
             </li>
             <li>
               <div>
-                <strong>Ээлж, танхимаа лавлана</strong>
-                <p>Ирэх өдөр болон сургалтын нөхцөлийг тодруулна.</p>
+                <strong>Дансаар шилжүүлнэ</strong>
+                <p>Гүйлгээний утгад кодоо заавал бичнэ.</p>
               </div>
             </li>
             <li>
               <div>
-                <strong>Суралцаж эхэлнэ</strong>
-                <p>Багштайгаа тохирсон бүлгийн хичээлд хамрагдана.</p>
+                <strong>Багш баталгаажуулна</strong>
+                <p>Төлбөр орсныг багш шалгаж, ээлжийг тань баталгаажуулж холбогдоно.</p>
               </div>
             </li>
           </ol>
+          <a class="button primary" href="#register">Бүртгүүлэх маягт</a>
+        </div>
+      </section>
+
+      <!-- Онлайн бүртгэл -->
+      <section id="register" class="section register-section" aria-labelledby="register-title">
+        <div class="container register-grid">
+          <div class="register-card">
+            <h2 id="register-title">Хүүхдээ бүртгүүлэх</h2>
+            <p class="register-lede">
+              Мэдээллийг зөвхөн багш нар харна. Сайтад нийтлэгдэхгүй.
+            </p>
+
+            <noscript>
+              <p class="register-error">
+                Маягт ажиллахад JavaScript шаардлагатай. Утсаар бүртгүүлнэ үү:
+                <a href="tel:+97680344372">+976 80344372</a>
+              </p>
+            </noscript>
+
+            <form id="register-form" class="register-form" novalidate hidden>
+              <p id="register-error" class="register-error" role="alert"></p>
+
+              <fieldset>
+                <legend>Хүүхэд</legend>
+                <label for="reg-child">Овог, нэр</label>
+                <input id="reg-child" name="child" type="text" maxlength="120" autocomplete="off" required />
+
+                <div class="register-row">
+                  <div>
+                    <label for="reg-age">Нас</label>
+                    <input id="reg-age" name="age" type="number" inputmode="numeric" min="3" max="18" required />
+                  </div>
+                  <div>
+                    <label for="reg-grade">Сургууль, анги <span class="optional">(заавал биш)</span></label>
+                    <input id="reg-grade" name="grade" type="text" maxlength="80" placeholder="14-р сургууль, 3б" />
+                  </div>
+                </div>
+
+                <label for="reg-experience">Шатрын мэдлэг</label>
+                <select id="reg-experience" name="experience" required>
+                  <option value="">Сонгоно уу</option>
+                  <option>Шатар мэдэхгүй</option>
+                  <option>Нүүдлээ мэднэ</option>
+                  <option>Тэмцээнд оролцож байсан</option>
+                </select>
+
+                <span class="register-label" id="reg-shift-label">Хүссэн ээлж</span>
+                <div class="shift-options" role="radiogroup" aria-labelledby="reg-shift-label">
+                  <label><input type="radio" name="shift" value="10:00–11:30" required /> <span>10:00–11:30</span></label>
+                  <label><input type="radio" name="shift" value="12:00–13:30" /> <span>12:00–13:30</span></label>
+                  <label><input type="radio" name="shift" value="14:00–16:00" /> <span>14:00–16:00<small>Тэмцээний бэлтгэл</small></span></label>
+                </div>
+              </fieldset>
+
+              <fieldset>
+                <legend>Эцэг эх, асран хамгаалагч</legend>
+                <label for="reg-parent">Нэр</label>
+                <input id="reg-parent" name="parent" type="text" maxlength="120" autocomplete="name" required />
+
+                <label for="reg-phone">Утас</label>
+                <input id="reg-phone" name="phone" type="tel" inputmode="numeric" maxlength="16" autocomplete="tel" placeholder="8 оронтой дугаар" required />
+
+                <label for="reg-note">Нэмэлт мэдээлэл <span class="optional">(заавал биш)</span></label>
+                <textarea id="reg-note" name="note" rows="3" maxlength="500"></textarea>
+              </fieldset>
+
+              <label class="register-consent">
+                <input id="reg-consent" name="consent" type="checkbox" required />
+                <span>
+                  Хүүхдийн мэдээллийг клуб зөвхөн бүртгэл, холбоо барих зорилгоор хадгалахыг
+                  зөвшөөрч байна.
+                </span>
+              </label>
+
+              <button class="button primary" type="submit">Бүртгүүлэх</button>
+            </form>
+
+            <div id="register-done" class="register-done" tabindex="-1" hidden>
+              <h3>Бүртгэл хүлээн авлаа</h3>
+              <p>Таны гүйлгээний код</p>
+              <p class="ref-code"><span id="done-code"></span></p>
+              <button id="copy-code" class="copy-contact" type="button">Кодыг хуулах</button>
+              <p id="copy-code-status" role="status"></p>
+              <div id="done-payment"></div>
+              <p class="register-small">
+                Кодоо хадгалаарай. Төлбөр баталгаажсан эсэхийг доорх «Төлбөрөө шалгах» хэсгээс харна.
+              </p>
+              <button id="register-again" class="button secondary" type="button">Өөр хүүхэд бүртгүүлэх</button>
+            </div>
+          </div>
+
+          <aside class="register-side" aria-label="Төлбөрийн мэдээлэл">
+            <div class="register-side-block">
+              <h3>Төлбөр</h3>
+              <p>
+                Сарын <strong data-club="fee">100,000₮</strong>. Дансаар шилжүүлнэ. Сайт мөнгө
+                хүлээн авахгүй.
+              </p>
+              <div id="bank-box"></div>
+            </div>
+
+            <div class="register-side-block" id="status">
+              <h3>Төлбөрөө шалгах</h3>
+              <p>Бүртгүүлэхэд авсан код, утасны дугаараа оруулна.</p>
+              <form id="status-form" class="register-form compact" novalidate hidden>
+                <label for="status-code">Гүйлгээний код</label>
+                <input id="status-code" name="code" type="text" maxlength="12" autocomplete="off" placeholder="CH0001" required />
+                <label for="status-phone">Утас</label>
+                <input id="status-phone" name="phone" type="tel" inputmode="numeric" maxlength="16" required />
+                <button class="button secondary" type="submit">Шалгах</button>
+              </form>
+              <div id="status-result" role="status"></div>
+            </div>
+          </aside>
         </div>
       </section>
 
@@ -179,9 +297,10 @@
             <details>
               <summary>Сургалтын төлбөр хэд вэ?</summary>
               <p>
-                Сургалтын төлбөр сарын <span data-club="feePlain">100,000 төгрөг</span>. Төлбөр
-                төлөх нөхцөл болон хамрагдах бүлгийн талаар
-                <span data-club="phone">+976 80344372</span> дугаараар лавлаарай.
+                Сургалтын төлбөр сарын <span data-club="feePlain">100,000 төгрөг</span>. Дансаар
+                шилжүүлэх бөгөөд гүйлгээний утгад бүртгүүлэхэд авсан кодоо бичнэ. Төлбөр орсныг багш
+                баталгаажуулна. Дэлгэрэнгүйг <span data-club="phone">+976 80344372</span> дугаараар
+                лавлаарай.
               </p>
             </details>
             <details>

@@ -433,6 +433,86 @@ label.admin-button:has(+ input:focus-visible) {
   color: #f5c98a;
 }
 
+/* Бүртгэл, төлбөр --------------------------------------------------------- */
+
+.reg-summary {
+  margin: 20px 0 12px;
+}
+
+.reg-tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.reg-tile {
+  display: grid;
+  gap: 2px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.reg-tile strong {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.reg-tile span {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.reg-tile.is-warn {
+  border-color: #d39a4a;
+  background: #fff1dc;
+}
+
+.reg-tile.is-new {
+  border-color: var(--blue);
+}
+
+:root[data-theme='dark'] .reg-tile.is-warn {
+  background: #3a2a14;
+}
+
+.reg-code {
+  margin-left: 10px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--paper);
+  font-size: 13px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.reg-status-select {
+  min-height: 44px;
+  padding: 6px 10px;
+  border: 1px solid #8f9bb8;
+  border-radius: 8px;
+  background: var(--body);
+}
+
+.admin-row-actions .button.gold {
+  min-height: 44px;
+  border: 0;
+}
+
+.admin-hint a {
+  color: var(--blue);
+  text-decoration: underline;
+}
+
+@media (max-width: 720px) {
+  .reg-tiles {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 /* ==========================================================================
    Цонх (dialog)
    ========================================================================== */
