@@ -140,7 +140,7 @@
     registrations = [];
     payments = [];
     $('reg-rows').replaceChildren();
-    $('reg-summary').replaceChildren();
+    $('shift-tabs').replaceChildren();
     showView('login');
     showStatus('Системээс гарлаа.');
   });
@@ -874,191 +874,126 @@
   // Идэвхтэй хүүхдийн төлөгдөөгүй үе эхэлсэн бол хугацаа нь болсон гэж үзнэ.
   const isDue = (r) => r.status === 'Идэвхтэй' && addMonths(r.start_date, firstUnpaid(r)) <= today();
 
-  const monthInput = $('pay-month');
-  monthInput.value = today().slice(0, 7);
-  const revenueMonth = () => monthInput.value || today().slice(0, 7);
-  const monthName = (ym) => `${ym.slice(0, 4)} оны ${Number(ym.slice(5, 7))}-р сар`;
-  // Орлогыг мөнгө орсон өдрөөр (байхгүй бол баталгаажуулсан өдрөөр) тоолно.
-  const receivedOn = (p) => p.paid_on || p.confirmed_at.slice(0, 10);
-
-  function visibleRegistrations() {
-    const filter = $('reg-filter').value;
-    const query = $('reg-search').value.trim().toLowerCase();
-    return registrations.filter((r) => {
-      if (filter === '' && r.status === 'Гарсан') return false;
-      if (filter === 'due' && !isDue(r)) return false;
-      if (STATUSES.includes(filter) && r.status !== filter) return false;
-      if (!query) return true;
-      return [r.child_name, r.parent_name, r.parent_phone, r.ref_code]
-        .filter(Boolean)
-        .some((value) => value.toLowerCase().includes(query));
-    });
-  }
-
-  function renderSummary() {
-    const month = revenueMonth();
-    const active = registrations.filter((r) => r.status === 'Идэвхтэй');
-    const received = payments.filter((p) => receivedOn(p).startsWith(month));
-    const total = received.reduce((sum, p) => sum + p.amount, 0);
-    const due = registrations.filter(isDue).length;
-    const fresh = registrations.filter((r) => r.status === 'Шинэ').length;
-
-    const tile = (value, label, kind = '') => {
-      const box = createElement('div', null, 'reg-tile ' + kind);
-      box.append(createElement('strong', String(value)), createElement('span', label));
-      return box;
-    };
-    const tiles = createElement('div', null, 'reg-tiles');
-    tiles.append(
-      tile(active.length, 'Идэвхтэй хүүхэд'),
-      tile(due, 'Төлөх хугацаа болсон', due > 0 ? 'is-warn' : ''),
-      tile(money(total), `${monthName(month)} орсон орлого`),
-      tile(fresh, 'Шинэ бүртгэл', fresh > 0 ? 'is-new' : ''),
-    );
-    const shifts = createElement('p', null, 'admin-hint');
-    shifts.textContent =
-      'Идэвхтэй хүүхэд ээлжээр: ' +
-      ['10:00–11:30', '12:00–13:30', '14:00–16:00']
-        .map((shift) => `${shift} — ${active.filter((r) => r.shift === shift).length}`)
-        .join(', ');
-    $('reg-summary').replaceChildren(tiles, shifts);
-  }
+  /* Ээлжийн товч + хүснэгт ------------------------------------------------ */
 
   const SHIFT_ORDER = ['10:00–11:30', '12:00–13:30', '14:00–16:00'];
+  let currentShift = SHIFT_ORDER[0];
   const byName = (a, b) => a.child_name.localeCompare(b.child_name, 'mn');
-  const SORTS = {
-    shift: (a, b) => SHIFT_ORDER.indexOf(a.shift) - SHIFT_ORDER.indexOf(b.shift) || byName(a, b),
-    name: byName,
-    created: (a, b) => a.created_at.localeCompare(b.created_at),
-    due: (a, b) =>
-      addMonths(a.start_date, firstUnpaid(a)).localeCompare(addMonths(b.start_date, firstUnpaid(b))) ||
-      byName(a, b),
-  };
 
-  // Ээлжийн гарчиг: хүүхдийн тоо, энэ үеийн төлбөр төлсөн нь.
-  function shiftHeading(shift, list) {
-    const paidNow = list.filter((r) => isPaid(r, currentIndex(r))).length;
-    const li = createElement('li', null, 'reg-group');
-    li.append(
-      createElement('h3', shift),
-      createElement('span', `${list.length} хүүхэд, одоогийн сарын төлбөр төлсөн ${paidNow}`),
-    );
-    return li;
+  // Одоогийн сарын төлбөр төлсөн эсэх (эхлээгүй бол эхний сар).
+  const paidNow = (r) => isPaid(r, currentIndex(r));
+  const showLeft = () => $('reg-left').checked;
+  const inShift = (shift) =>
+    registrations.filter((r) => r.shift === shift && (showLeft() || r.status !== 'Гарсан'));
+
+  function renderShiftTabs() {
+    const tabs = SHIFT_ORDER.map((shift) => {
+      const list = inShift(shift);
+      const paid = list.filter(paidNow).length;
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'shift-tab';
+      button.setAttribute('role', 'tab');
+      button.setAttribute('aria-selected', String(shift === currentShift));
+      button.append(
+        createElement('strong', shift),
+        createElement('span', `${list.length} хүүхэд`),
+        createElement('span', `Төлсөн ${paid}, төлөөгүй ${list.length - paid}`, paid < list.length ? 'is-due' : ''),
+      );
+      button.addEventListener('click', () => {
+        currentShift = shift;
+        renderRegistrations();
+      });
+      return button;
+    });
+    $('shift-tabs').replaceChildren(...tabs);
+  }
+
+  function visibleRegistrations() {
+    const query = $('reg-search').value.trim().toLowerCase();
+    // Хайлт бичсэн бол бүх ээлжээс хайна.
+    const base = query ? registrations.filter((r) => showLeft() || r.status !== 'Гарсан') : inShift(currentShift);
+    return base
+      .filter((r) => !$('reg-unpaid').checked || !paidNow(r))
+      .filter((r) =>
+        !query || [r.child_name, r.parent_name, r.parent_phone].some((v) => (v || '').toLowerCase().includes(query)),
+      )
+      .sort(byName);
+  }
+
+  function paymentCell(r) {
+    const td = document.createElement('td');
+    if (paidNow(r)) {
+      const until = dayBefore(addMonths(r.start_date, currentIndex(r) + 1));
+      td.append(createElement('span', 'Төлсөн', 'pay-pill is-paid'), createElement('small', `${dateLabel(until)} хүртэл`));
+    } else {
+      td.append(createElement('span', 'Төлөөгүй', 'pay-pill is-unpaid'), createElement('small', money(r.monthly_fee)));
+    }
+    return td;
   }
 
   function renderRegistrations() {
-    renderSummary();
-    const sortKey = $('reg-sort').value;
-    const visible = visibleRegistrations().sort(SORTS[sortKey] || SORTS.shift);
+    renderShiftTabs();
+    const visible = visibleRegistrations();
+    const query = $('reg-search').value.trim();
 
     if (visible.length === 0) {
-      return $('reg-rows').replaceChildren(
-        createElement(
-          'li',
-          registrations.length === 0
-            ? 'Одоогоор бүртгэл ирээгүй байна. Эцэг эх «Холбоо барих» хуудасны маягтаар бүртгүүлнэ.'
-            : 'Шүүлтүүрт тохирох бүртгэл олдсонгүй.',
-          'admin-empty',
-        ),
+      const tr = document.createElement('tr');
+      const td = createElement(
+        'td',
+        registrations.length === 0
+          ? 'Одоогоор бүртгэл ирээгүй байна.'
+          : query
+            ? 'Хайлтад тохирох хүүхэд олдсонгүй.'
+            : 'Энэ ээлжид харуулах хүүхэд алга.',
+        'reg-empty',
       );
+      td.colSpan = 7;
+      tr.append(td);
+      return $('reg-rows').replaceChildren(tr);
     }
 
-    const rowFor = (r) => {
-        const row = createElement('li', null, 'admin-row');
-        const info = document.createElement('div');
-        info.append(createElement('strong', r.child_name), createElement('span', r.ref_code, 'reg-code'));
+    $('reg-rows').replaceChildren(
+      ...visible.map((r, i) => {
+        const tr = document.createElement('tr');
+        if (r.status === 'Гарсан' || r.status === 'Түр зогссон') tr.className = 'is-inactive';
 
-        const details = [
-          r.birth_date && `Төрсөн ${dateLabel(r.birth_date)} (${ageOf(r.birth_date)} настай)`,
-          r.school_type === '14' ? '14-р сургууль' : 'Бусад сургууль',
-          r.school_grade,
-          r.experience,
-          `Ээлж ${r.shift}`,
-        ].filter(Boolean);
-        info.append(createElement('p', details.join(', '), 'admin-hint'));
+        const name = document.createElement('td');
+        name.append(createElement('strong', r.child_name));
+        const sub = [];
+        if (query) sub.push(r.shift);
+        if (r.school_type === 'other') sub.push('Бусад сургууль');
+        if (r.status !== 'Идэвхтэй') sub.push(r.status);
+        if (sub.length) name.append(createElement('small', sub.join(', ')));
 
-        const parent = createElement('p', null, 'admin-hint');
-        parent.append(`${r.parent_name}: `);
-        const phone = createElement('a', r.parent_phone);
-        phone.href = 'tel:+976' + r.parent_phone;
-        parent.append(phone, `. Эхэлсэн ${dateLabel(r.start_date)}, сарын төлбөр ${money(r.monthly_fee)}`);
-        info.append(parent);
-        if (r.note) info.append(createElement('p', `Эцэг эхийн тэмдэглэл: ${r.note}`, 'admin-hint'));
-        if (r.admin_note) info.append(createElement('p', `Тэмдэглэл: ${r.admin_note}`, 'admin-hint'));
+        const phone = document.createElement('td');
+        const link = createElement('a', r.parent_phone);
+        link.href = 'tel:+976' + r.parent_phone;
+        phone.append(link, createElement('small', r.parent_name));
 
-        const paid = paymentsOf(r);
-        const next = addMonths(r.start_date, firstUnpaid(r));
-        const badges = createElement('p', null, 'admin-badges');
-        const statusKind = { Шинэ: 'is-warn', Идэвхтэй: 'is-live', 'Түр зогссон': 'is-draft', Гарсан: 'is-draft' };
-        badges.append(badge(r.status, statusKind[r.status]));
-        if (paid.length > 0) {
-          const last = paid[paid.length - 1];
-          badges.append(badge(`Сүүлд төлсөн сар: ${labelFor(r, last.period_start)}`, 'is-ok'));
+        const actions = createElement('td', null, 'reg-actions');
+        if (!paidNow(r)) {
+          actions.append(createButton('Төлсөн', 'button gold small', () => openPaymentForm(r)));
         }
-        badges.append(
-          next <= today()
-            ? badge(`Төлөх хугацаа болсон: ${dateLabel(next)}`, 'is-warn')
-            : badge(`Дараагийн төлбөр: ${dateLabel(next)}`, 'is-draft'),
+        actions.append(createButton('Засах', 'admin-button small', () => openRegistrationForm(r)));
+
+        tr.append(
+          createElement('td', String(i + 1), 'reg-num'),
+          name,
+          createElement('td', r.school_grade || ''),
+          createElement('td', r.birth_date ? String(ageOf(r.birth_date)) : ''),
+          phone,
+          paymentCell(r),
+          actions,
         );
-        info.append(badges);
-
-        const actions = createElement('div', null, 'admin-row-actions');
-        const statusSelect = document.createElement('select');
-        statusSelect.className = 'reg-status-select';
-        statusSelect.setAttribute('aria-label', `${r.child_name}: төлөв`);
-        STATUSES.forEach((status) => {
-          const option = createElement('option', status);
-          option.value = status;
-          option.selected = status === r.status;
-          statusSelect.append(option);
-        });
-        statusSelect.addEventListener('change', async () => {
-          statusSelect.disabled = true;
-          try {
-            Object.assign(r, await Backend.update('registrations', r.id, { status: statusSelect.value }));
-            showStatus(`${r.child_name}: төлөв «${r.status}» боллоо.`);
-            renderRegistrations();
-          } catch (error) {
-            statusSelect.value = r.status;
-            showError(error);
-          } finally {
-            statusSelect.disabled = false;
-          }
-        });
-
-        actions.append(
-          statusSelect,
-          createButton('Төлбөр баталгаажуулах', 'button gold', () => openPaymentForm(r)),
-          createButton('Засах', 'admin-button', () => openRegistrationForm(r)),
-        );
-        if (paid.length > 0) {
-          actions.append(
-            createButton('Сүүлийн төлбөр цуцлах', 'admin-button', () => cancelPayment(r, paid[paid.length - 1])),
-          );
-        }
-        actions.append(createButton('Устгах', 'admin-button is-danger', () => deleteRegistration(r)));
-
-        row.append(info, actions);
-        return row;
-    };
-
-    if (sortKey === 'shift') {
-      const items = [];
-      SHIFT_ORDER.forEach((shift) => {
-        const group = visible.filter((r) => r.shift === shift);
-        if (group.length === 0) return;
-        items.push(shiftHeading(shift, group), ...group.map(rowFor));
-      });
-      $('reg-rows').replaceChildren(...items);
-    } else {
-      $('reg-rows').replaceChildren(...visible.map(rowFor));
-    }
+        return tr;
+      }),
+    );
   }
 
-  $('reg-sort').addEventListener('change', renderRegistrations);
-  monthInput.addEventListener('change', renderRegistrations);
-  $('reg-filter').addEventListener('change', renderRegistrations);
   $('reg-search').addEventListener('input', renderRegistrations);
+  $('reg-unpaid').addEventListener('change', renderRegistrations);
+  $('reg-left').addEventListener('change', renderRegistrations);
 
   /* Төлбөр баталгаажуулах цонх */
 
@@ -1154,6 +1089,33 @@
     $('edit-fee').value = r.monthly_fee;
     $('edit-start').value = r.start_date;
     $('edit-note').value = r.admin_note || '';
+    $('edit-status').value = r.status;
+
+    // Төлсөн сарууд, сүүлийнхийг цуцлах боломжтой.
+    const box = $('edit-payments');
+    const paid = paymentsOf(r);
+    box.replaceChildren(createElement('h3', 'Төлбөрүүд'));
+    if (paid.length === 0) {
+      box.append(createElement('p', 'Баталгаажсан төлбөр алга.', 'admin-hint'));
+    } else {
+      const list = document.createElement('ul');
+      paid.forEach((p) =>
+        list.append(createElement('li', `${labelFor(r, p.period_start)}: ${money(p.amount)}${p.paid_on ? `, орсон: ${dateLabel(p.paid_on)}` : ''}`)),
+      );
+      box.append(list);
+      box.append(
+        createButton('Сүүлийн төлбөрийг цуцлах', 'admin-button small', () => {
+          registrationDialog.close();
+          cancelPayment(r, paid[paid.length - 1]);
+        }),
+      );
+    }
+    box.append(
+      createButton('Өөр сарын төлбөр нэмэх', 'admin-button small', () => {
+        registrationDialog.close();
+        openPaymentForm(r);
+      }),
+    );
     registrationDialog.showModal();
   }
 
@@ -1178,6 +1140,7 @@
             school_type: $('edit-school').value,
             monthly_fee: fee,
             start_date: $('edit-start').value,
+            status: $('edit-status').value,
             admin_note: emptyToNull($('edit-note').value),
           }),
         );
@@ -1188,6 +1151,12 @@
         errorBox.textContent = error?.message || String(error);
       }
     });
+  });
+
+  $('registration-delete').addEventListener('click', () => {
+    const r = registrationTarget;
+    registrationDialog.close();
+    deleteRegistration(r);
   });
 
   async function deleteRegistration(r) {

@@ -181,46 +181,31 @@
 
         <!-- Бүртгэл, төлбөр -->
         <section id="panel-registrations" role="tabpanel" aria-labelledby="tab-registrations" hidden>
-          <div class="admin-toolbar">
-            <div class="admin-search">
-              <label for="pay-month">Орлогын сар</label>
-              <input id="pay-month" type="month" />
-            </div>
-            <div class="admin-search">
-              <label for="reg-filter">Шүүх</label>
-              <select id="reg-filter">
-                <option value="">Гарснаас бусад</option>
-                <option value="due">Төлөх хугацаа болсон</option>
-                <option value="Шинэ">Шинэ бүртгэл</option>
-                <option value="Идэвхтэй">Идэвхтэй</option>
-                <option value="Түр зогссон">Түр зогссон</option>
-                <option value="Гарсан">Гарсан</option>
-                <option value="all">Бүгд</option>
-              </select>
-            </div>
-            <div class="admin-search">
-              <label for="reg-sort">Эрэмбэ</label>
-              <select id="reg-sort">
-                <option value="shift">Ээлжээр бүлэглэх</option>
-                <option value="name">Нэрээр</option>
-                <option value="created">Бүртгүүлсэн дарааллаар</option>
-                <option value="due">Төлбөрийн огноогоор</option>
-              </select>
-            </div>
-            <div class="admin-search">
-              <label for="reg-search">Хайх</label>
-              <input id="reg-search" type="search" placeholder="Нэр, утас, код" />
-            </div>
-            <button id="reg-export" class="admin-button" type="button">CSV татах</button>
+          <div id="shift-tabs" class="shift-tabs" role="tablist" aria-label="Ээлж"></div>
+
+          <div class="reg-toolbar">
+            <input id="reg-search" type="search" placeholder="Нэр, утсаар хайх" aria-label="Нэр, утсаар хайх" />
+            <label class="reg-check"><input id="reg-unpaid" type="checkbox" /> Зөвхөн төлөөгүй</label>
+            <label class="reg-check"><input id="reg-left" type="checkbox" /> Гарсныг харуулах</label>
+            <button id="reg-export" class="admin-button" type="button">Excel-д татах</button>
           </div>
 
-          <div id="reg-summary" class="reg-summary" aria-live="polite"></div>
-          <p class="admin-hint">
-            Эцэг эх гүйлгээний утгад хүүхдийн овог нэр, утасны дугаараа бичнэ. Банкны хуулгаас
-            нэр эсвэл утсаар хайж, тухайн хүүхдийн «Төлбөр баталгаажуулах» товчийг дарна. Төлбөрийн
-            сар хүүхэд бүрийн эхэлсэн өдрөөс тоологдоно.
-          </p>
-          <ul id="reg-rows" class="admin-rows"></ul>
+          <div class="reg-table-wrap">
+            <table class="reg-table">
+              <thead>
+                <tr>
+                  <th scope="col">№</th>
+                  <th scope="col">Хүүхэд</th>
+                  <th scope="col">Анги</th>
+                  <th scope="col">Нас</th>
+                  <th scope="col">Утас</th>
+                  <th scope="col">Төлбөр</th>
+                  <th scope="col"><span class="visually-hidden">Үйлдэл</span></th>
+                </tr>
+              </thead>
+              <tbody id="reg-rows"></tbody>
+            </table>
+          </div>
         </section>
       </div>
     </main>
@@ -575,12 +560,23 @@
           Төлбөрийн сар эхэлсэн өдрөөс тоологдоно. Төлбөр баталгаажуулсан хүүхдийн эхэлсэн өдрийг
           өөрчилбөл өмнөх төлбөрүүд шинэ үетэй таарахгүй болохыг анхаарна уу.
         </p>
+        <label for="edit-status">Төлөв</label>
+        <select id="edit-status" name="status">
+          <option>Шинэ</option>
+          <option>Идэвхтэй</option>
+          <option>Түр зогссон</option>
+          <option>Гарсан</option>
+        </select>
+
         <label for="edit-note">Админы тэмдэглэл</label>
         <input id="edit-note" name="admin_note" type="text" maxlength="500" />
+
+        <div id="edit-payments" class="edit-payments"></div>
 
         <div class="admin-actions">
           <button id="registration-save" class="button gold" type="submit">Хадгалах</button>
           <button class="admin-button" type="button" data-close-dialog>Болих</button>
+          <button id="registration-delete" class="admin-button is-danger" type="button">Бүртгэл устгах</button>
         </div>
       </form>
     </dialog>
