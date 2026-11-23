@@ -924,9 +924,32 @@
     $('reg-summary').replaceChildren(tiles, shifts);
   }
 
+  const SHIFT_ORDER = ['10:00–11:30', '12:00–13:30', '14:00–16:00'];
+  const byName = (a, b) => a.child_name.localeCompare(b.child_name, 'mn');
+  const SORTS = {
+    shift: (a, b) => SHIFT_ORDER.indexOf(a.shift) - SHIFT_ORDER.indexOf(b.shift) || byName(a, b),
+    name: byName,
+    created: (a, b) => a.created_at.localeCompare(b.created_at),
+    due: (a, b) =>
+      addMonths(a.start_date, firstUnpaid(a)).localeCompare(addMonths(b.start_date, firstUnpaid(b))) ||
+      byName(a, b),
+  };
+
+  // Ээлжийн гарчиг: хүүхдийн тоо, энэ үеийн төлбөр төлсөн нь.
+  function shiftHeading(shift, list) {
+    const paidNow = list.filter((r) => isPaid(r, currentIndex(r))).length;
+    const li = createElement('li', null, 'reg-group');
+    li.append(
+      createElement('h3', shift),
+      createElement('span', `${list.length} хүүхэд, одоогийн сарын төлбөр төлсөн ${paidNow}`),
+    );
+    return li;
+  }
+
   function renderRegistrations() {
     renderSummary();
-    const visible = visibleRegistrations();
+    const sortKey = $('reg-sort').value;
+    const visible = visibleRegistrations().sort(SORTS[sortKey] || SORTS.shift);
 
     if (visible.length === 0) {
       return $('reg-rows').replaceChildren(
@@ -940,8 +963,7 @@
       );
     }
 
-    $('reg-rows').replaceChildren(
-      ...visible.map((r) => {
+    const rowFor = (r) => {
         const row = createElement('li', null, 'admin-row');
         const info = document.createElement('div');
         info.append(createElement('strong', r.child_name), createElement('span', r.ref_code, 'reg-code'));
@@ -1018,10 +1040,22 @@
 
         row.append(info, actions);
         return row;
-      }),
-    );
+    };
+
+    if (sortKey === 'shift') {
+      const items = [];
+      SHIFT_ORDER.forEach((shift) => {
+        const group = visible.filter((r) => r.shift === shift);
+        if (group.length === 0) return;
+        items.push(shiftHeading(shift, group), ...group.map(rowFor));
+      });
+      $('reg-rows').replaceChildren(...items);
+    } else {
+      $('reg-rows').replaceChildren(...visible.map(rowFor));
+    }
   }
 
+  $('reg-sort').addEventListener('change', renderRegistrations);
   monthInput.addEventListener('change', renderRegistrations);
   $('reg-filter').addEventListener('change', renderRegistrations);
   $('reg-search').addEventListener('input', renderRegistrations);

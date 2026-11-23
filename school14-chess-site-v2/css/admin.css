@@ -479,6 +479,32 @@ label.admin-button:has(+ input:focus-visible) {
   background: #3a2a14;
 }
 
+.reg-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 14px;
+  margin-top: 18px;
+  padding: 10px 4px 6px;
+  border-bottom: 2px solid var(--blue);
+  list-style: none;
+}
+
+.reg-group:first-child {
+  margin-top: 0;
+}
+
+.reg-group h3 {
+  margin: 0;
+  font-size: 22px;
+  font-variant-numeric: tabular-nums;
+}
+
+.reg-group span {
+  color: var(--muted);
+  font-size: 14px;
+}
+
 .reg-code {
   margin-left: 10px;
   padding: 2px 8px;
