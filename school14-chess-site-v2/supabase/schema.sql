@@ -409,3 +409,55 @@ $$;
 
 revoke all on function public.submit_registration(text, date, text, text, text, text, text, text, text, boolean) from public;
 grant execute on function public.submit_registration(text, date, text, text, text, text, text, text, text, boolean) to anon, authenticated;
+
+-- ---------------------------------------------------------------------------
+-- 8. Ирц ба 8 хичээлийн төлбөр
+--    Нэг төлбөр = 8 хичээл (payments.lessons). Ирц бүртгэсэн хичээл бүр (ирсэн,
+--    тасалсан, чөлөөтэй аль нь ч) хүүхдийн хичээлээс нэгийг хасна. Үлдсэн нь 0
+--    болоход дараагийн төлбөр төлнө. Анхны хичээл 2026-11-28 (Бямба).
+--    Зөвхөн админ уншиж, бичнэ.
+-- ---------------------------------------------------------------------------
+
+alter table public.payments
+  add column if not exists lessons integer not null default 8 check (lessons between 1 and 100);
+alter table public.payments drop constraint if exists payments_one_per_period;
+
+create table if not exists public.class_sessions (
+  id          uuid primary key default gen_random_uuid(),
+  shift       text not null check (shift in ('10:00–11:30', '12:00–13:30', '14:00–16:00')),
+  class_date  date not null,
+  created_by  uuid default auth.uid() references auth.users (id) on delete set null,
+  created_at  timestamptz not null default now(),
+  unique (shift, class_date)
+);
+
+create table if not exists public.attendance (
+  session_id      uuid not null references public.class_sessions (id) on delete cascade,
+  registration_id uuid not null references public.registrations (id) on delete cascade,
+  status          text not null check (status in ('Ирсэн', 'Тасалсан', 'Чөлөөтэй')),
+  marked_by       uuid default auth.uid() references auth.users (id) on delete set null,
+  marked_at       timestamptz not null default now(),
+  primary key (session_id, registration_id)
+);
+
+create index if not exists attendance_registration_idx on public.attendance (registration_id);
+create index if not exists attendance_marked_by_idx on public.attendance (marked_by);
+create index if not exists class_sessions_created_by_idx on public.class_sessions (created_by);
+
+alter table public.class_sessions enable row level security;
+alter table public.attendance     enable row level security;
+
+revoke all on public.class_sessions, public.attendance from public, anon, authenticated;
+grant select, insert, update, delete on public.class_sessions, public.attendance to authenticated;
+
+drop policy if exists "Админ хичээлийг удирдана" on public.class_sessions;
+create policy "Админ хичээлийг удирдана" on public.class_sessions
+  for all to authenticated
+  using ((select public.is_admin()))
+  with check ((select public.is_admin()));
+
+drop policy if exists "Админ ирцийг удирдана" on public.attendance;
+create policy "Админ ирцийг удирдана" on public.attendance
+  for all to authenticated
+  using ((select public.is_admin()))
+  with check ((select public.is_admin()));

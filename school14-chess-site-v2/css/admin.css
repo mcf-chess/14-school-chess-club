@@ -921,3 +921,118 @@ label.admin-button:has(+ input:focus-visible) {
     font-size: 22px;
   }
 }
+
+/* Ирц --------------------------------------------------------------------- */
+
+.att-date {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin-bottom: 16px;
+}
+
+.att-date label {
+  font-weight: 600;
+}
+
+.att-date input {
+  min-height: 46px;
+  padding: 8px 12px;
+  border: 1px solid #8f9bb8;
+  border-radius: 10px;
+  background: var(--body);
+  font-size: 17px;
+}
+
+.att-day {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.att-day.is-warn {
+  color: #a0520c;
+}
+
+.shift-tab span.is-done {
+  color: #1f5a1a;
+  font-weight: 600;
+}
+
+.shift-tab[aria-selected='true'] span.is-done {
+  color: inherit;
+}
+
+.att-state {
+  flex: 1 1 260px;
+  margin: 0;
+  color: #a0520c;
+  font-weight: 600;
+}
+
+.att-state.is-done {
+  color: #1f5a1a;
+}
+
+.att-table {
+  min-width: 560px;
+}
+
+.att-segment {
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+
+.att-option {
+  min-width: 92px;
+  min-height: 42px;
+  padding: 6px 12px;
+  border: 0;
+  border-left: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.att-option:first-child {
+  border-left: 0;
+}
+
+.att-option[aria-checked='true'][data-status='Ирсэн'] {
+  background: #2f7a2a;
+  color: #fff;
+}
+
+.att-option[aria-checked='true'][data-status='Тасалсан'] {
+  background: #b5462b;
+  color: #fff;
+}
+
+.att-option[aria-checked='true'][data-status='Чөлөөтэй'] {
+  background: #d39a2f;
+  color: #2a2118;
+}
+
+.att-option:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: -3px;
+}
+
+.pay-pill.is-low {
+  background: #fff0c2;
+  color: #7a5200;
+}
+
+.link-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--danger, #b42318);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}

@@ -144,6 +144,16 @@
           >
             Бүртгэл, төлбөр
           </button>
+          <button
+            id="tab-attendance"
+            type="button"
+            role="tab"
+            aria-selected="false"
+            aria-controls="panel-attendance"
+            tabindex="-1"
+          >
+            Ирц
+          </button>
         </div>
 
         <!-- Тамирчид -->
@@ -206,6 +216,45 @@
               <tbody id="reg-rows"></tbody>
             </table>
           </div>
+          <p class="admin-hint">
+            Нэг төлбөр 8 хичээл. Ирсэн, тасалсан, чөлөөтэй аль нь ч бай ирц бүртгэсэн хичээл бүр
+            тоологдоно. 2 ба түүнээс цөөн хичээл үлдвэл «Төлбөр» товч гарна.
+          </p>
+        </section>
+
+        <!-- Ирц -->
+        <section id="panel-attendance" role="tabpanel" aria-labelledby="tab-attendance" hidden>
+          <div class="att-date">
+            <label for="att-date">Хичээлийн өдөр</label>
+            <input id="att-date" type="date" />
+            <span id="att-day" class="att-day"></span>
+          </div>
+
+          <div id="att-shift-tabs" class="shift-tabs" role="tablist" aria-label="Ээлж"></div>
+
+          <div class="reg-toolbar">
+            <p id="att-state" class="att-state" role="status"></p>
+            <button id="att-all-present" class="admin-button" type="button">Бүгдийг «Ирсэн» болгох</button>
+            <button id="att-save" class="button gold" type="button">Ирц хадгалах</button>
+          </div>
+
+          <div class="reg-table-wrap">
+            <table class="reg-table att-table">
+              <thead>
+                <tr>
+                  <th scope="col">№</th>
+                  <th scope="col">Хүүхэд</th>
+                  <th scope="col">Үлдсэн хичээл</th>
+                  <th scope="col">Ирц</th>
+                </tr>
+              </thead>
+              <tbody id="att-rows"></tbody>
+            </table>
+          </div>
+          <p class="admin-hint">
+            Ирц хадгалахад жагсаалтын хүүхэд бүрийн 8 хичээлээс нэг хасагдана.
+            <button id="att-delete" class="link-button" type="button" hidden>Энэ хичээлийн ирцийг устгах</button>
+          </p>
         </section>
       </div>
     </main>
@@ -489,8 +538,8 @@
 
         <div class="admin-grid">
           <div>
-            <label for="payment-period">Аль сарын төлбөр</label>
-            <select id="payment-period" name="period" required></select>
+            <label for="payment-lessons">Хичээлийн тоо</label>
+            <input id="payment-lessons" name="lessons" type="number" min="1" max="100" step="1" required />
           </div>
           <div>
             <label for="payment-amount">Дүн (₮)</label>

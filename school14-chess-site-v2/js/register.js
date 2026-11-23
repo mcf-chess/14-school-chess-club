@@ -30,6 +30,16 @@
   const digits = (value) => value.replace(/\D/g, '').replace(/^976(?=\d{8}$)/, '');
   const todayUB = () =>
     new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ulaanbaatar' }).format(new Date());
+  // Анхны хичээл 2026.11.28 (Бямба). Түүнээс хойш бол дараагийн Бямба эсвэл Ням.
+  const FIRST_CLASS = '2026-11-28';
+  function firstClassLabel() {
+    const date = new Date(todayUB() + 'T00:00:00Z');
+    while (![0, 6].includes(date.getUTCDay())) date.setUTCDate(date.getUTCDate() + 1);
+    let iso = date.toISOString().slice(0, 10);
+    if (iso < FIRST_CLASS) iso = FIRST_CLASS;
+    const day = new Date(iso + 'T00:00:00Z').getUTCDay() === 6 ? 'Бямба' : 'Ням';
+    return `${dateLabel(iso)}, ${day} гараг`;
+  }
   // IBAN-ыг 4 тэмдэгтээр бүлэглэж харуулна (хуулахад зайгүй).
   const groupIban = (iban) => iban.replace(/(.{4})(?=.)/g, '$1 ');
 
@@ -163,11 +173,11 @@
   function showDone(done) {
     const summary = $('done-summary');
     summary.replaceChildren();
-    addRow(summary, 'Төлөх дүн', `${money(done.fee)} / сар`, { className: 'is-amount' });
+    addRow(summary, 'Төлөх дүн', money(done.fee), { className: 'is-amount' });
+    addRow(summary, 'Хичээлийн тоо', '8 удаагийн хичээл');
     addRow(summary, 'Хичээллэх өдөр', `${club.days || 'Бямба, Ням'} гараг`);
     addRow(summary, 'Цаг', done.shift);
-    addRow(summary, 'Эхний сар', `${dateLabel(done.start_date)} – ${dateLabel(done.period_end)}`);
-    addRow(summary, 'Дараагийн төлбөр', dateLabel(done.next_due));
+    addRow(summary, 'Хичээл эхлэх', firstClassLabel());
 
     const pay = $('pay-details');
     pay.replaceChildren();

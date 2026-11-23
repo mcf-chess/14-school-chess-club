@@ -214,6 +214,16 @@ const Backend = (() => {
     return rows[0];
   }
 
+  /** Байвал шинэчилж, байхгүй бол нэмнэ (onConflict: давхардлыг шалгах баганууд). */
+  async function upsert(table, rows, onConflict) {
+    return request(`/rest/v1/${table}?on_conflict=${encodeURIComponent(onConflict)}`, {
+      method: 'POST',
+      body: rows,
+      headers: { Prefer: 'return=representation,resolution=merge-duplicates' },
+      token: await accessToken(),
+    });
+  }
+
   async function update(table, id, patch) {
     const rows = await request(`/rest/v1/${table}?${idFilter(id)}`, {
       method: 'PATCH',
@@ -288,6 +298,7 @@ const Backend = (() => {
     callPublic,
     list,
     insert,
+    upsert,
     update,
     remove,
     uploadPhoto,

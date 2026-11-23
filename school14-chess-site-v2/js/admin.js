@@ -4,7 +4,8 @@
     2. Тамирчдын жагсаалт, хайлт
     3. Тамирчин нэмэх, засах, зураг солих, нийтлэх, устгах
     4. Тэмцээний амжилт нэмэх, засах, нийтлэх, устгах
-    5. Хүүхдийн бүртгэл, сарын төлбөр баталгаажуулах
+    5. Хүүхдийн бүртгэл, төлбөр (нэг төлбөр = 8 хичээл)
+    6. Ирцийн бүртгэл
 
   Энэ файл зөвхөн дэлгэцийг удирдана. Хэн юу өөрчилж чадахыг сервер шийднэ
   (supabase/schema.sql): админы жагсаалтад байхгүй хэрэглэгчийн хүсэлтийг сервер өөрөө
@@ -22,7 +23,9 @@
   let athletes = []; // Серверээс ирсэн бүх тамирчин (ноорог орно)
   let achievements = [];
   let registrations = []; // Эцэг эхийн онлайн бүртгэл
-  let payments = []; // Баталгаажсан төлбөр
+  let payments = []; // Баталгаажсан төлбөр (нэг нь ихэвчлэн 8 хичээл)
+  let sessions = []; // Хичээлүүд (ээлж + өдөр)
+  let attendance = []; // Ирцийн бичлэг
 
   /* Туслах функцууд -------------------------------------------------------- */
 
@@ -139,6 +142,10 @@
     $('achievement-rows').replaceChildren();
     registrations = [];
     payments = [];
+    sessions = [];
+    attendance = [];
+    $('att-rows').replaceChildren();
+    $('att-shift-tabs').replaceChildren();
     $('reg-rows').replaceChildren();
     $('shift-tabs').replaceChildren();
     showView('login');
@@ -147,7 +154,7 @@
 
   /* Хэсэг солих (Тамирчид / Амжилт) ---------------------------------------- */
 
-  const tabs = [$('tab-athletes'), $('tab-achievements'), $('tab-registrations')];
+  const tabs = [$('tab-athletes'), $('tab-achievements'), $('tab-registrations'), $('tab-attendance')];
 
   function showPanel(tab, { focus = false } = {}) {
     tabs.forEach((item) => {
@@ -172,16 +179,19 @@
   /* Өгөгдөл ачаалах -------------------------------------------------------- */
 
   async function reload() {
-    [athletes, achievements, registrations, payments] = await Promise.all([
+    [athletes, achievements, registrations, payments, sessions, attendance] = await Promise.all([
       Backend.list('athletes', 'select=*&order=full_name.asc'),
       Backend.list('achievements', 'select=*&order=event_date.desc.nullslast,created_at.desc'),
       Backend.list('registrations', 'select=*&order=created_at.desc'),
-      Backend.list('payments', 'select=*&order=period_start.asc'),
+      Backend.list('payments', 'select=*&order=confirmed_at.asc'),
+      Backend.list('class_sessions', 'select=*&order=class_date.asc'),
+      Backend.list('attendance', 'select=session_id,registration_id,status'),
     ]);
     renderAthletes();
     renderAchievementFilter();
     renderAchievements();
     renderRegistrations();
+    renderAttendance();
   }
 
   /* 2. Тамирчдын жагсаалт, хайлт ------------------------------------------- */
@@ -808,15 +818,19 @@
     }
   }
 
-  /* 5. Бүртгэл, сарын төлбөр ---------------------------------------------- */
+  /* 5. Бүртгэл, төлбөр (8 хичээлийн багц) ---------------------------------- */
 
   /*
-    Төлбөрийн сар хүүхэд бүрийн эхэлсэн өдрөөс (start_date) тоологдоно:
-    11/22-нд эхэлсэн бол 11/22–12/21 эхний сар, дараагийн сар 12/22-нд эхэлнэ.
-    Огнооны тооцоо сервер дээрх billing_period()-тэй адил.
+    Нэг төлбөр = 8 хичээл (payments.lessons). Ирц бүртгэсэн хичээл бүр (ирсэн, тасалсан,
+    чөлөөтэй аль нь ч) хүүхдийн хичээлээс нэгийг хасна. Үлдсэн нь 0 болоход дараагийн
+    төлбөр төлөх ёстой.
   */
   const STATUSES = ['Шинэ', 'Идэвхтэй', 'Түр зогссон', 'Гарсан'];
   const FEES = (typeof CLUB !== 'undefined' && CLUB.feeBySchool) || { 14: 100000, other: 250000 };
+  const LESSONS_PER_PAYMENT = 8;
+  const LOW_LESSONS = 2; // Ийм буюу цөөн хичээл үлдвэл «Төлбөр» товч гарна.
+  const SHIFT_ORDER = ['10:00–11:30', '12:00–13:30', '14:00–16:00'];
+
 
   const today = () =>
     new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Ulaanbaatar' }).format(new Date());
@@ -829,105 +843,93 @@
   };
   // Эцэг эхэд зааварласан гүйлгээний утга: хүүхдийн овог нэр + утас.
   const transferRef = (r) => `${r.child_name} ${r.parent_phone}`;
-
-  function addMonths(iso, k) {
-    const [y, m, d] = String(iso).slice(0, 10).split('-').map(Number);
-    const target = new Date(Date.UTC(y, m - 1 + k, 1));
-    const last = new Date(Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0)).getUTCDate();
-    target.setUTCDate(Math.min(d, last));
-    return target.toISOString().slice(0, 10);
-  }
-  const dayBefore = (iso) => {
-    const date = new Date(iso + 'T00:00:00Z');
-    date.setUTCDate(date.getUTCDate() - 1);
-    return date.toISOString().slice(0, 10);
-  };
-  const periodLabel = (r, k) =>
-    `${dateLabel(addMonths(r.start_date, k))} – ${dateLabel(dayBefore(addMonths(r.start_date, k + 1)))}`;
-
-  // Төлбөрийн үеийн эхлэх өдрөөс «2026.11.22 – 2026.12.21» гэсэн шошго.
-  function labelFor(r, periodStart) {
-    for (let k = 0; k < 240; k += 1) {
-      if (addMonths(r.start_date, k) === periodStart) return periodLabel(r, k);
-    }
-    return dateLabel(periodStart);
-  }
+  const byName = (a, b) => a.child_name.localeCompare(b.child_name, 'mn');
 
   const paymentsOf = (r) =>
     payments
       .filter((p) => p.registration_id === r.id)
-      .sort((x, y) => x.period_start.localeCompare(y.period_start));
-  const isPaid = (r, k) => payments.some((p) => p.registration_id === r.id && p.period_start === addMonths(r.start_date, k));
+      .sort((x, y) => (x.confirmed_at || '').localeCompare(y.confirmed_at || ''));
+  const boughtOf = (r) => paymentsOf(r).reduce((sum, p) => sum + (p.lessons || LESSONS_PER_PAYMENT), 0);
+  const usedOf = (r) => attendance.filter((a) => a.registration_id === r.id).length;
+  const leftOf = (r) => boughtOf(r) - usedOf(r);
+  const hasLessons = (r) => leftOf(r) > 0;
+  const needsPayment = (r) => leftOf(r) <= LOW_LESSONS;
 
-  // Өнөөдөр аль үе явж байгаа (эхлээгүй бол 0).
-  function currentIndex(r) {
-    const now = today();
-    let k = 0;
-    while (k < 240 && addMonths(r.start_date, k + 1) <= now) k += 1;
-    return k;
+  /* Ээлжийн товч (бүртгэл, ирц хоёуланд) */
+
+  function shiftButton(shift, selected, lines, onClick) {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'shift-tab';
+    button.setAttribute('role', 'tab');
+    button.setAttribute('aria-selected', String(selected));
+    button.append(createElement('strong', shift));
+    lines.forEach(([text, className]) => button.append(createElement('span', text, className || '')));
+    button.addEventListener('click', onClick);
+    return button;
   }
-  function firstUnpaid(r) {
-    let k = 0;
-    while (k < 240 && isPaid(r, k)) k += 1;
-    return k;
-  }
-  // Идэвхтэй хүүхдийн төлөгдөөгүй үе эхэлсэн бол хугацаа нь болсон гэж үзнэ.
-  const isDue = (r) => r.status === 'Идэвхтэй' && addMonths(r.start_date, firstUnpaid(r)) <= today();
 
-  /* Ээлжийн товч + хүснэгт ------------------------------------------------ */
+  /* Бүртгэлийн хүснэгт ---------------------------------------------------- */
 
-  const SHIFT_ORDER = ['10:00–11:30', '12:00–13:30', '14:00–16:00'];
   let currentShift = SHIFT_ORDER[0];
-  const byName = (a, b) => a.child_name.localeCompare(b.child_name, 'mn');
-
-  // Одоогийн сарын төлбөр төлсөн эсэх (эхлээгүй бол эхний сар).
-  const paidNow = (r) => isPaid(r, currentIndex(r));
   const showLeft = () => $('reg-left').checked;
   const inShift = (shift) =>
     registrations.filter((r) => r.shift === shift && (showLeft() || r.status !== 'Гарсан'));
 
   function renderShiftTabs() {
-    const tabs = SHIFT_ORDER.map((shift) => {
-      const list = inShift(shift);
-      const paid = list.filter(paidNow).length;
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'shift-tab';
-      button.setAttribute('role', 'tab');
-      button.setAttribute('aria-selected', String(shift === currentShift));
-      button.append(
-        createElement('strong', shift),
-        createElement('span', `${list.length} хүүхэд`),
-        createElement('span', `Төлсөн ${paid}, төлөөгүй ${list.length - paid}`, paid < list.length ? 'is-due' : ''),
-      );
-      button.addEventListener('click', () => {
-        currentShift = shift;
-        renderRegistrations();
-      });
-      return button;
-    });
-    $('shift-tabs').replaceChildren(...tabs);
+    $('shift-tabs').replaceChildren(
+      ...SHIFT_ORDER.map((shift) => {
+        const list = inShift(shift);
+        const ok = list.filter(hasLessons).length;
+        const due = list.length - ok;
+        return shiftButton(
+          shift,
+          shift === currentShift,
+          [
+            [`${list.length} хүүхэд`],
+            [`Төлсөн ${ok}, төлөх ${due}`, due > 0 ? 'is-due' : ''],
+          ],
+          () => {
+            currentShift = shift;
+            renderRegistrations();
+          },
+        );
+      }),
+    );
   }
 
   function visibleRegistrations() {
     const query = $('reg-search').value.trim().toLowerCase();
     // Хайлт бичсэн бол бүх ээлжээс хайна.
-    const base = query ? registrations.filter((r) => showLeft() || r.status !== 'Гарсан') : inShift(currentShift);
+    const base = query
+      ? registrations.filter((r) => showLeft() || r.status !== 'Гарсан')
+      : inShift(currentShift);
     return base
-      .filter((r) => !$('reg-unpaid').checked || !paidNow(r))
-      .filter((r) =>
-        !query || [r.child_name, r.parent_name, r.parent_phone].some((v) => (v || '').toLowerCase().includes(query)),
+      .filter((r) => !$('reg-unpaid').checked || needsPayment(r))
+      .filter(
+        (r) =>
+          !query ||
+          [r.child_name, r.parent_name, r.parent_phone].some((v) => (v || '').toLowerCase().includes(query)),
       )
       .sort(byName);
   }
 
   function paymentCell(r) {
     const td = document.createElement('td');
-    if (paidNow(r)) {
-      const until = dayBefore(addMonths(r.start_date, currentIndex(r) + 1));
-      td.append(createElement('span', 'Төлсөн', 'pay-pill is-paid'), createElement('small', `${dateLabel(until)} хүртэл`));
-    } else {
+    const bought = boughtOf(r);
+    const left = leftOf(r);
+    if (bought === 0) {
       td.append(createElement('span', 'Төлөөгүй', 'pay-pill is-unpaid'), createElement('small', money(r.monthly_fee)));
+    } else if (left <= 0) {
+      td.append(
+        createElement('span', 'Төлөх', 'pay-pill is-unpaid'),
+        createElement('small', left < 0 ? `${-left} хичээл өртэй` : '8 хичээл дууссан'),
+      );
+    } else {
+      td.append(
+        createElement('span', 'Төлсөн', `pay-pill ${left <= LOW_LESSONS ? 'is-low' : 'is-paid'}`),
+        createElement('small', `${left} хичээл үлдсэн`),
+      );
     }
     return td;
   }
@@ -972,8 +974,8 @@
         phone.append(link, createElement('small', r.parent_name));
 
         const actions = createElement('td', null, 'reg-actions');
-        if (!paidNow(r)) {
-          actions.append(createButton('Төлсөн', 'button gold small', () => openPaymentForm(r)));
+        if (needsPayment(r)) {
+          actions.append(createButton('Төлбөр', 'button gold small', () => openPaymentForm(r)));
         }
         actions.append(createButton('Засах', 'admin-button small', () => openRegistrationForm(r)));
 
@@ -1005,18 +1007,11 @@
     paymentTarget = r;
     paymentForm.reset();
     $('payment-form-error').textContent = '';
-    $('payment-who').textContent = `${r.child_name} (${r.ref_code}), ээлж ${r.shift}`;
-
-    // Төлөгдөөгүй үеүд: эхнийхээс одоогийн үеийн дараагийнх хүртэл.
-    const select = $('payment-period');
-    select.replaceChildren();
-    const last = Math.max(currentIndex(r) + 1, firstUnpaid(r));
-    for (let k = 0; k <= last; k += 1) {
-      if (isPaid(r, k)) continue;
-      const option = createElement('option', periodLabel(r, k));
-      option.value = addMonths(r.start_date, k);
-      select.append(option);
-    }
+    const left = leftOf(r);
+    $('payment-who').textContent =
+      `${r.child_name}, ээлж ${r.shift}. ` +
+      (boughtOf(r) === 0 ? 'Анхны төлбөр.' : `Одоо ${Math.max(left, 0)} хичээл үлдсэн.`);
+    $('payment-lessons').value = LESSONS_PER_PAYMENT;
     $('payment-amount').value = r.monthly_fee;
     $('payment-date').value = today();
     $('payment-ref').value = transferRef(r);
@@ -1027,18 +1022,20 @@
   paymentForm.addEventListener('submit', async (event) => {
     event.preventDefault();
     const errorBox = $('payment-form-error');
-    const period = $('payment-period').value;
+    const lessons = Number($('payment-lessons').value);
     const amount = Number($('payment-amount').value);
-    if (!period) return (errorBox.textContent = 'Төлбөрийн сараа сонгоно уу.');
+    if (!Number.isInteger(lessons) || lessons <= 0) return (errorBox.textContent = 'Хичээлийн тоог зөв бичнэ үү.');
     if (!Number.isInteger(amount) || amount <= 0) return (errorBox.textContent = 'Дүнг зөв бичнэ үү.');
 
     await withBusy($('payment-save'), async () => {
       try {
+        const paidOn = $('payment-date').value || today();
         const saved = await Backend.insert('payments', {
           registration_id: paymentTarget.id,
-          period_start: period,
+          period_start: paidOn,
+          lessons,
           amount,
-          paid_on: $('payment-date').value || null,
+          paid_on: paidOn,
           bank_ref: emptyToNull($('payment-ref').value),
           note: emptyToNull($('payment-note').value),
         });
@@ -1051,8 +1048,9 @@
           );
         }
         paymentDialog.close();
-        showStatus(`${paymentTarget.child_name}: төлбөр баталгаажлаа (${labelFor(paymentTarget, saved.period_start)}).`);
+        showStatus(`${paymentTarget.child_name}: төлбөр баталгаажлаа. ${leftOf(paymentTarget)} хичээл үлдсэн.`);
         renderRegistrations();
+        renderAttendance();
       } catch (error) {
         errorBox.textContent = error?.message || String(error);
       }
@@ -1061,7 +1059,7 @@
 
   async function cancelPayment(r, payment) {
     const ok = await confirmDelete(
-      `${r.child_name}: ${labelFor(r, payment.period_start)} сарын төлбөрийн баталгаажуулалтыг цуцлах уу? Эцэг эхэд «төлөөгүй» гэж харагдана.`,
+      `${r.child_name}: ${dateLabel(payment.paid_on || payment.period_start)}-ны ${money(payment.amount)}-ийн төлбөрийн баталгаажуулалтыг цуцлах уу? ${payment.lessons || LESSONS_PER_PAYMENT} хичээл хасагдана.`,
     );
     if (!ok) return;
     try {
@@ -1069,6 +1067,7 @@
       payments = payments.filter((p) => p.id !== payment.id);
       showStatus('Төлбөрийн баталгаажуулалтыг цуцаллаа.');
       renderRegistrations();
+      renderAttendance();
     } catch (error) {
       showError(error);
     }
@@ -1091,16 +1090,25 @@
     $('edit-note').value = r.admin_note || '';
     $('edit-status').value = r.status;
 
-    // Төлсөн сарууд, сүүлийнхийг цуцлах боломжтой.
     const box = $('edit-payments');
     const paid = paymentsOf(r);
-    box.replaceChildren(createElement('h3', 'Төлбөрүүд'));
-    if (paid.length === 0) {
-      box.append(createElement('p', 'Баталгаажсан төлбөр алга.', 'admin-hint'));
-    } else {
+    box.replaceChildren(
+      createElement('h3', 'Хичээл, төлбөр'),
+      createElement(
+        'p',
+        `Төлсөн ${boughtOf(r)} хичээл, суусан ${usedOf(r)}, үлдсэн ${leftOf(r)}.`,
+        'admin-hint',
+      ),
+    );
+    if (paid.length > 0) {
       const list = document.createElement('ul');
       paid.forEach((p) =>
-        list.append(createElement('li', `${labelFor(r, p.period_start)}: ${money(p.amount)}${p.paid_on ? `, орсон: ${dateLabel(p.paid_on)}` : ''}`)),
+        list.append(
+          createElement(
+            'li',
+            `${dateLabel(p.paid_on || p.period_start)}: ${money(p.amount)}, ${p.lessons || LESSONS_PER_PAYMENT} хичээл`,
+          ),
+        ),
       );
       box.append(list);
       box.append(
@@ -1111,7 +1119,7 @@
       );
     }
     box.append(
-      createButton('Өөр сарын төлбөр нэмэх', 'admin-button small', () => {
+      createButton('Төлбөр нэмэх', 'admin-button small', () => {
         registrationDialog.close();
         openPaymentForm(r);
       }),
@@ -1128,8 +1136,8 @@
     event.preventDefault();
     const errorBox = $('registration-form-error');
     const fee = Number($('edit-fee').value);
-    if (!Number.isInteger(fee) || fee <= 0) return (errorBox.textContent = 'Сарын төлбөрийг зөв бичнэ үү.');
-    if (!$('edit-start').value) return (errorBox.textContent = 'Эхэлсэн өдрийг сонгоно уу.');
+    if (!Number.isInteger(fee) || fee <= 0) return (errorBox.textContent = 'Төлбөрийн дүнг зөв бичнэ үү.');
+    if (!$('edit-start').value) return (errorBox.textContent = 'Бүртгүүлсэн өдрийг сонгоно уу.');
 
     await withBusy($('registration-save'), async () => {
       try {
@@ -1147,6 +1155,7 @@
         registrationDialog.close();
         showStatus(`${registrationTarget.child_name}: бүртгэл шинэчлэгдлээ.`);
         renderRegistrations();
+        renderAttendance();
       } catch (error) {
         errorBox.textContent = error?.message || String(error);
       }
@@ -1161,32 +1170,34 @@
 
   async function deleteRegistration(r) {
     const ok = await confirmDelete(
-      `${r.child_name} (${r.ref_code})-ийн бүртгэл болон бүх төлбөрийн бичлэгийг бүрмөсөн устгах уу? Буцаах боломжгүй.`,
+      `${r.child_name} (${r.ref_code})-ийн бүртгэл, төлбөр, ирцийн бүх бичлэгийг бүрмөсөн устгах уу? Буцаах боломжгүй.`,
     );
     if (!ok) return;
     try {
       await Backend.remove('registrations', r.id);
       registrations = registrations.filter((x) => x.id !== r.id);
       payments = payments.filter((p) => p.registration_id !== r.id);
+      attendance = attendance.filter((a) => a.registration_id !== r.id);
       showStatus('Бүртгэлийг устгалаа.');
       renderRegistrations();
+      renderAttendance();
     } catch (error) {
       showError(error);
     }
   }
 
-  // Харагдаж буй жагсаалтыг Excel / Sheets-д нээгдэх CSV болгон татна.
+  // Харагдаж буй жагсаалтыг Excel-д нээгдэх CSV болгон татна.
   $('reg-export').addEventListener('click', () => {
     const header = [
-      'Код', 'Хүүхдийн нэр', 'Төрсөн өдөр', 'Сургууль', 'Анги', 'Мэдлэг', 'Ээлж', 'Эцэг/эх', 'Утас',
-      'Төлөв', 'Сарын төлбөр', 'Эхэлсэн', 'Төлсөн сарын тоо', 'Дараагийн төлбөр',
+      'Хүүхдийн нэр', 'Төрсөн өдөр', 'Сургууль', 'Анги', 'Мэдлэг', 'Ээлж', 'Эцэг/эх', 'Утас',
+      'Төлөв', 'Төлбөрийн дүн', 'Төлсөн хичээл', 'Суусан', 'Үлдсэн',
     ];
     const cell = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
     const lines = visibleRegistrations().map((r) =>
       [
-        r.ref_code, r.child_name, r.birth_date, r.school_type === '14' ? '14-р сургууль' : 'Бусад',
+        r.child_name, r.birth_date, r.school_type === '14' ? '14-р сургууль' : 'Бусад',
         r.school_grade, r.experience, r.shift, r.parent_name, r.parent_phone, r.status,
-        r.monthly_fee, r.start_date, paymentsOf(r).length, addMonths(r.start_date, firstUnpaid(r)),
+        r.monthly_fee, boughtOf(r), usedOf(r), leftOf(r),
       ].map(cell).join(','),
     );
     const blob = new Blob(['﻿' + [header.map(cell).join(','), ...lines].join('\r\n')], {
@@ -1198,6 +1209,204 @@
     link.click();
     setTimeout(() => URL.revokeObjectURL(link.href), 1000);
   });
+
+  /* 6. Ирц ----------------------------------------------------------------- */
+
+  const FIRST_CLASS = '2026-11-28'; // Анхны хичээл (Бямба)
+  const ATT_STATUSES = ['Ирсэн', 'Тасалсан', 'Чөлөөтэй'];
+  const WEEKDAYS = ['Ням', 'Даваа', 'Мягмар', 'Лхагва', 'Пүрэв', 'Баасан', 'Бямба'];
+  const weekday = (iso) => new Date(iso + 'T00:00:00Z').getUTCDay();
+
+  // Өнөөдөр Бямба/Ням бол өнөөдөр, үгүй бол дараагийн Бямба (анхны хичээлээс өмнө биш).
+  function defaultClassDate() {
+    const date = new Date(today() + 'T00:00:00Z');
+    while (![0, 6].includes(date.getUTCDay())) date.setUTCDate(date.getUTCDate() + 1);
+    const iso = date.toISOString().slice(0, 10);
+    return iso < FIRST_CLASS ? FIRST_CLASS : iso;
+  }
+
+  const attDate = $('att-date');
+  attDate.value = defaultClassDate();
+  let attShift = SHIFT_ORDER[0];
+  let draft = new Map(); // registration_id → төлөв (хадгалаагүй)
+  let draftKey = '';
+
+  const sessionFor = (shift, date) => sessions.find((s) => s.shift === shift && s.class_date === date);
+  const marksOf = (session) => (session ? attendance.filter((a) => a.session_id === session.id) : []);
+
+  // Жагсаалт: тухайн ээлжийн шинэ/идэвхтэй хүүхэд + энэ хичээлд аль хэдийн ирц бүртгэгдсэн хүүхэд.
+  function rollFor(shift, date) {
+    const marked = new Set(marksOf(sessionFor(shift, date)).map((a) => a.registration_id));
+    return registrations
+      .filter((r) => marked.has(r.id) || (r.shift === shift && (r.status === 'Шинэ' || r.status === 'Идэвхтэй')))
+      .sort(byName);
+  }
+
+  function resetDraft() {
+    const key = `${attShift}|${attDate.value}`;
+    if (key === draftKey) return;
+    draftKey = key;
+    draft = new Map();
+    const session = sessionFor(attShift, attDate.value);
+    marksOf(session).forEach((a) => draft.set(a.registration_id, a.status));
+    rollFor(attShift, attDate.value).forEach((r) => {
+      if (!draft.has(r.id)) draft.set(r.id, 'Ирсэн');
+    });
+  }
+
+  function renderAttendance() {
+    if (!attDate.value) return;
+    const date = attDate.value;
+    const day = weekday(date);
+    $('att-day').textContent = `${WEEKDAYS[day]} гараг` + ([0, 6].includes(day) ? '' : ' (хичээлийн өдөр биш)');
+    $('att-day').classList.toggle('is-warn', ![0, 6].includes(day));
+
+    $('att-shift-tabs').replaceChildren(
+      ...SHIFT_ORDER.map((shift) => {
+        const session = sessionFor(shift, date);
+        const count = rollFor(shift, date).length;
+        return shiftButton(
+          shift,
+          shift === attShift,
+          [
+            [`${count} хүүхэд`],
+            session ? ['Ирц хадгалагдсан ✓', 'is-done'] : ['Ирц бүртгээгүй', 'is-due'],
+          ],
+          () => {
+            attShift = shift;
+            renderAttendance();
+          },
+        );
+      }),
+    );
+
+    resetDraft();
+    const session = sessionFor(attShift, date);
+    const roll = rollFor(attShift, date);
+    $('att-state').textContent = session
+      ? `Ирц хадгалагдсан. ${marksOf(session).filter((a) => a.status === 'Ирсэн').length}/${marksOf(session).length} ирсэн.`
+      : 'Энэ хичээлийн ирц хадгалагдаагүй байна.';
+    $('att-state').classList.toggle('is-done', Boolean(session));
+    $('att-delete').hidden = !session;
+
+    if (roll.length === 0) {
+      const tr = document.createElement('tr');
+      const td = createElement('td', 'Энэ ээлжид хүүхэд алга.', 'reg-empty');
+      td.colSpan = 4;
+      tr.append(td);
+      return $('att-rows').replaceChildren(tr);
+    }
+
+    $('att-rows').replaceChildren(
+      ...roll.map((r, i) => {
+        const tr = document.createElement('tr');
+        const name = document.createElement('td');
+        name.append(createElement('strong', r.child_name));
+        if (r.shift !== attShift) name.append(createElement('small', `Одоо ${r.shift} ээлжид`));
+
+        const left = leftOf(r);
+        const leftCell = document.createElement('td');
+        leftCell.append(
+          createElement(
+            'span',
+            boughtOf(r) === 0 ? 'Төлөөгүй' : left <= 0 ? 'Төлөх' : `${left}`,
+            `pay-pill ${boughtOf(r) === 0 || left <= 0 ? 'is-unpaid' : left <= LOW_LESSONS ? 'is-low' : 'is-paid'}`,
+          ),
+        );
+
+        const choice = createElement('td', null, 'att-choice');
+        const group = document.createElement('div');
+        group.className = 'att-segment';
+        group.setAttribute('role', 'radiogroup');
+        group.setAttribute('aria-label', `${r.child_name}: ирц`);
+        ATT_STATUSES.forEach((status) => {
+          const button = createElement('button', status, 'att-option');
+          button.type = 'button';
+          button.dataset.status = status;
+          button.setAttribute('role', 'radio');
+          button.setAttribute('aria-checked', String(draft.get(r.id) === status));
+          button.addEventListener('click', () => {
+            draft.set(r.id, status);
+            group.querySelectorAll('button').forEach((b) =>
+              b.setAttribute('aria-checked', String(b.dataset.status === status)),
+            );
+            $('att-state').textContent = 'Өөрчлөлт хадгалагдаагүй байна.';
+            $('att-state').classList.remove('is-done');
+          });
+          group.append(button);
+        });
+        choice.append(group);
+
+        tr.append(createElement('td', String(i + 1), 'reg-num'), name, leftCell, choice);
+        return tr;
+      }),
+    );
+  }
+
+  attDate.addEventListener('change', renderAttendance);
+
+  $('att-all-present').addEventListener('click', () => {
+    rollFor(attShift, attDate.value).forEach((r) => draft.set(r.id, 'Ирсэн'));
+    renderAttendance();
+    $('att-state').textContent = 'Өөрчлөлт хадгалагдаагүй байна.';
+    $('att-state').classList.remove('is-done');
+  });
+
+  $('att-save').addEventListener('click', async () => {
+    const date = attDate.value;
+    if (!date) return showError(new Error('Хичээлийн өдрийг сонгоно уу.'));
+    const roll = rollFor(attShift, date);
+    if (roll.length === 0) return showError(new Error('Энэ ээлжид хүүхэд алга.'));
+
+    await withBusy($('att-save'), async () => {
+      try {
+        let session = sessionFor(attShift, date);
+        if (!session) {
+          const rows = await Backend.upsert('class_sessions', [{ shift: attShift, class_date: date }], 'shift,class_date');
+          session = rows[0];
+          sessions.push(session);
+        }
+        const rows = roll.map((r) => ({
+          session_id: session.id,
+          registration_id: r.id,
+          status: draft.get(r.id) || 'Ирсэн',
+        }));
+        const saved = await Backend.upsert('attendance', rows, 'session_id,registration_id');
+        attendance = attendance.filter((a) => a.session_id !== session.id).concat(saved);
+        draftKey = '';
+        const finished = roll.filter((r) => boughtOf(r) > 0 && leftOf(r) <= 0).length;
+        showStatus(
+          `${dateLabel(date)}, ${attShift} ээлжийн ирц хадгалагдлаа.` +
+            (finished ? ` ${finished} хүүхдийн төлсөн хичээл дууссан.` : ''),
+        );
+        renderAttendance();
+        renderRegistrations();
+      } catch (error) {
+        showError(error);
+      }
+    });
+  });
+
+  $('att-delete').addEventListener('click', async () => {
+    const session = sessionFor(attShift, attDate.value);
+    if (!session) return;
+    const ok = await confirmDelete(
+      `${dateLabel(session.class_date)}, ${session.shift} ээлжийн ирцийг бүхэлд нь устгах уу? Хүүхдүүдийн хичээл буцаж нэмэгдэнэ.`,
+    );
+    if (!ok) return;
+    try {
+      await Backend.remove('class_sessions', session.id);
+      sessions = sessions.filter((s) => s.id !== session.id);
+      attendance = attendance.filter((a) => a.session_id !== session.id);
+      draftKey = '';
+      showStatus('Энэ хичээлийн ирцийг устгалаа.');
+      renderAttendance();
+      renderRegistrations();
+    } catch (error) {
+      showError(error);
+    }
+  });
+
 
   /* Сайтаас «Засах» дарж ирэх --------------------------------------------- */
 
