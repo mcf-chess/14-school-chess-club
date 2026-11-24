@@ -224,6 +224,12 @@
 
         <!-- Ирц -->
         <section id="panel-attendance" role="tabpanel" aria-labelledby="tab-attendance" hidden>
+          <div class="att-mode" role="tablist" aria-label="Ирцийн харагдац">
+            <button id="att-mode-mark" type="button" role="tab" aria-selected="true">Ирц бүртгэх</button>
+            <button id="att-mode-journal" type="button" role="tab" aria-selected="false">Ирцийн журнал</button>
+          </div>
+
+          <div id="att-mark">
           <h2 class="att-step"><span>1</span> Өдрөө сонгоно</h2>
           <div class="att-days-row">
             <div id="att-days" class="att-days" role="tablist" aria-label="Хичээлийн өдөр"></div>
@@ -239,8 +245,10 @@
 
           <h2 class="att-step"><span>3</span> Ирээгүй хүүхдийг тэмдэглээд хадгална</h2>
           <p class="admin-hint att-howto">
-            Бүх хүүхэд анхнаасаа «Ирсэн» байна. Ирээгүй хүүхдийн мөрөнд «Тасалсан» эсвэл «Чөлөөтэй»
-            дарна. Аль нь ч бай 8 хичээлээс нэг хасагдана.
+            Бүх хүүхэд анхнаасаа «Ирсэн» байна. Ирээгүй хүүхдэд л «Тасалсан» эсвэл «Чөлөөтэй» дарна.
+            Аль нь ч бай 8 хичээлээс нэг хасагдана. Хүүхдийн нэрийн доорх 8 цэг нь төлсөн 8 хичээлийн явц:
+            <span class="dot-inline is-present"></span> ирсэн, <span class="dot-inline is-absent"></span> тасалсан,
+            <span class="dot-inline is-excused"></span> чөлөөтэй, <span class="dot-inline"></span> үлдсэн.
           </p>
           <div id="att-counts" class="att-counts" aria-live="polite"></div>
 
@@ -251,7 +259,6 @@
                   <th scope="col">№</th>
                   <th scope="col">Хүүхэд</th>
                   <th scope="col">Ирц</th>
-                  <th scope="col">Үлдсэн хичээл</th>
                 </tr>
               </thead>
               <tbody id="att-rows"></tbody>
@@ -266,6 +273,26 @@
           <p class="admin-hint">
             <button id="att-delete" class="link-button" type="button" hidden>Энэ хичээлийн ирцийг устгах</button>
           </p>
+          </div>
+
+          <div id="att-journal" hidden>
+            <p class="admin-hint">
+              Ээлж бүрийн бүх хичээлийн ирц. Өдрийн гарчиг дээр дарж тухайн өдрийн ирцийг засна.
+            </p>
+            <div id="att-journal-shifts" class="shift-tabs" role="tablist" aria-label="Ээлж"></div>
+            <div class="att-legend">
+              <span><i class="mark is-present">✓</i> Ирсэн</span>
+              <span><i class="mark is-absent">✗</i> Тасалсан</span>
+              <span><i class="mark is-excused">Ч</i> Чөлөөтэй</span>
+              <span><i class="mark is-none">·</i> Тухайн үед бүртгэлгүй</span>
+            </div>
+            <div class="reg-table-wrap journal-wrap">
+              <table class="reg-table journal-table">
+                <thead id="att-journal-head"></thead>
+                <tbody id="att-journal-rows"></tbody>
+              </table>
+            </div>
+          </div>
         </section>
       </div>
     </main>

@@ -1247,6 +1247,8 @@
   const attDate = $('att-date');
   attDate.value = defaultClassDate();
   let attShift = SHIFT_ORDER[0];
+  let attMode = 'mark'; // 'mark' — ирц бүртгэх, 'journal' — ирцийн журнал
+  let journalShift = SHIFT_ORDER[0];
   let draft = new Map(); // registration_id → төлөв (хадгалаагүй)
   let draftKey = '';
   let dirty = false;
@@ -1308,6 +1310,40 @@
     );
   }
 
+  // Хүүхдийн одоогийн төлбөрийн багц доторх ирц (цэгээр харуулна).
+  const STATUS_CLASS = { Ирсэн: 'is-present', Тасалсан: 'is-absent', Чөлөөтэй: 'is-excused' };
+  const sessionDate = (id) => (sessions.find((x) => x.id === id) || {}).class_date || '';
+
+  function lessonTrack(r) {
+    const marks = attendance
+      .filter((a) => a.registration_id === r.id)
+      .sort((x, y) => sessionDate(x.session_id).localeCompare(sessionDate(y.session_id)))
+      .map((a) => a.status);
+    const sizes = paymentsOf(r).map((p) => p.lessons || LESSONS_PER_PAYMENT);
+    const used = marks.length;
+    let start = 0;
+    for (const size of sizes) {
+      if (used < start + size) return { size, marks: marks.slice(start, start + size), owed: 0, paid: true };
+      start += size;
+    }
+    if (sizes.length === 0) return { size: LESSONS_PER_PAYMENT, marks: [], owed: used, paid: false };
+    const last = sizes[sizes.length - 1];
+    return { size: last, marks: marks.slice(start - last, start), owed: used - start, paid: true };
+  }
+
+  function lessonDots(r) {
+    const track = lessonTrack(r);
+    const box = createElement('span', null, 'lesson-dots');
+    box.setAttribute('aria-hidden', 'true');
+    for (let i = 0; i < track.size; i += 1) {
+      const dot = createElement('i', null, 'dot');
+      if (track.marks[i]) dot.classList.add(STATUS_CLASS[track.marks[i]]);
+      box.append(dot);
+    }
+    if (track.owed > 0) box.append(createElement('b', `+${track.owed}`, 'dot-owed'));
+    return box;
+  }
+
   function renderCounts() {
     const roll = rollFor(attShift, attDate.value);
     const count = (status) => roll.filter((r) => draft.get(r.id) === status).length;
@@ -1349,6 +1385,7 @@
   }
 
   function renderAttendance() {
+    if (attMode === 'journal') return renderJournal();
     if (!attDate.value) return;
     const date = attDate.value;
     renderDays();
@@ -1384,7 +1421,7 @@
     if (roll.length === 0) {
       const tr = document.createElement('tr');
       const td = createElement('td', 'Энэ ээлжид хүүхэд алга.', 'reg-empty');
-      td.colSpan = 4;
+      td.colSpan = 3;
       tr.append(td);
       return $('att-rows').replaceChildren(tr);
     }
@@ -1393,9 +1430,13 @@
       ...roll.map((r, i) => {
         const tr = document.createElement('tr');
         tr.dataset.status = draft.get(r.id);
-        const name = document.createElement('td');
+        const name = createElement('td', null, 'att-name');
         name.append(createElement('strong', r.child_name));
         if (r.shift !== attShift) name.append(createElement('small', `Одоо ${r.shift} ээлжид`));
+        const [text, kind] = leftLabel(r, session);
+        const progress = createElement('span', null, 'att-progress');
+        progress.append(lessonDots(r), createElement('span', text, `pay-pill ${kind}`));
+        name.append(progress);
 
         const choice = createElement('td', null, 'att-choice');
         const group = document.createElement('div');
@@ -1423,11 +1464,8 @@
         });
         choice.append(group);
 
-        const [text, kind] = leftLabel(r, session);
-        const leftCell = document.createElement('td');
-        leftCell.append(createElement('span', text, `pay-pill ${kind}`));
 
-        tr.append(createElement('td', String(i + 1), 'reg-num'), name, choice, leftCell);
+        tr.append(createElement('td', String(i + 1), 'reg-num'), name, choice);
         return tr;
       }),
     );
@@ -1504,6 +1542,126 @@
     }
   });
 
+
+  /* Ирцийн журнал (ээлж бүрийн бүх хичээл) */
+
+  const MARK_SYMBOL = { Ирсэн: '✓', Тасалсан: '✗', Чөлөөтэй: 'Ч' };
+
+  function setAttMode(mode) {
+    attMode = mode;
+    $('att-mode-mark').setAttribute('aria-selected', String(mode === 'mark'));
+    $('att-mode-journal').setAttribute('aria-selected', String(mode === 'journal'));
+    $('att-mark').hidden = mode !== 'mark';
+    $('att-journal').hidden = mode !== 'journal';
+    if (mode === 'journal') {
+      journalShift = attShift;
+      renderJournal();
+    } else {
+      renderAttendance();
+    }
+  }
+
+  $('att-mode-mark').addEventListener('click', () => setAttMode('mark'));
+  $('att-mode-journal').addEventListener('click', async () => {
+    if (attMode === 'journal' || !(await leaveDraft())) return;
+    draftKey = '';
+    setAttMode('journal');
+  });
+
+  function renderJournal() {
+    const shiftSessions = sessions
+      .filter((x) => x.shift === journalShift)
+      .sort((a, b) => a.class_date.localeCompare(b.class_date));
+    const ids = new Set(shiftSessions.map((x) => x.id));
+    const marked = new Set(attendance.filter((a) => ids.has(a.session_id)).map((a) => a.registration_id));
+    const roll = registrations
+      .filter((r) => marked.has(r.id) || (r.shift === journalShift && (r.status === 'Шинэ' || r.status === 'Идэвхтэй')))
+      .sort(byName);
+
+    $('att-journal-shifts').replaceChildren(
+      ...SHIFT_ORDER.map((shift) =>
+        shiftButton(
+          shift,
+          shift === journalShift,
+          [[`${sessions.filter((x) => x.shift === shift).length} хичээл бүртгэсэн`]],
+          () => {
+            journalShift = shift;
+            renderJournal();
+          },
+        ),
+      ),
+    );
+
+    const head = document.createElement('tr');
+    head.append(createElement('th', 'Хүүхэд', 'journal-name'));
+    shiftSessions.forEach((session) => {
+      const th = document.createElement('th');
+      th.className = 'journal-date';
+      const button = createElement('button', null, 'journal-date-btn');
+      button.type = 'button';
+      button.title = 'Энэ өдрийн ирцийг засах';
+      button.append(
+        createElement('span', shortDate(session.class_date)),
+        createElement('small', WEEKDAYS[weekday(session.class_date)].slice(0, 2)),
+      );
+      button.addEventListener('click', () => {
+        attShift = session.shift;
+        attDate.value = session.class_date;
+        draftKey = '';
+        setAttMode('mark');
+      });
+      th.append(button);
+      head.append(th);
+    });
+    head.append(createElement('th', 'Ирсэн', 'journal-sum'), createElement('th', 'Үлдсэн', 'journal-sum'));
+    $('att-journal-head').replaceChildren(head);
+
+    if (shiftSessions.length === 0 || roll.length === 0) {
+      const tr = document.createElement('tr');
+      const td = createElement(
+        'td',
+        shiftSessions.length === 0
+          ? 'Энэ ээлжид ирц бүртгэсэн хичээл алга. «Ирц бүртгэх» хэсгээс эхэлнэ.'
+          : 'Энэ ээлжид хүүхэд алга.',
+        'reg-empty',
+      );
+      td.colSpan = shiftSessions.length + 3;
+      tr.append(td);
+      return $('att-journal-rows').replaceChildren(tr);
+    }
+
+    $('att-journal-rows').replaceChildren(
+      ...roll.map((r) => {
+        const tr = document.createElement('tr');
+        const name = createElement('th', null, 'journal-name');
+        name.scope = 'row';
+        name.append(createElement('strong', r.child_name));
+        tr.append(name);
+        let present = 0;
+        shiftSessions.forEach((session) => {
+          const mark = attendance.find((a) => a.session_id === session.id && a.registration_id === r.id);
+          const td = createElement('td', null, 'journal-cell');
+          const cls = mark ? STATUS_CLASS[mark.status] : 'is-none';
+          const i = createElement('i', mark ? MARK_SYMBOL[mark.status] : '·', `mark ${cls}`);
+          i.title = mark ? mark.status : 'Бүртгэлгүй';
+          td.append(i);
+          if (mark && mark.status === 'Ирсэн') present += 1;
+          tr.append(td);
+        });
+        const left = leftOf(r);
+        const leftTd = createElement('td', null, 'journal-sum');
+        leftTd.append(
+          createElement(
+            'span',
+            boughtOf(r) === 0 ? 'Төлөөгүй' : left <= 0 ? 'Төлөх' : String(left),
+            `pay-pill ${boughtOf(r) === 0 || left <= 0 ? 'is-unpaid' : left <= LOW_LESSONS ? 'is-low' : 'is-paid'}`,
+          ),
+        );
+        tr.append(createElement('td', String(present), 'journal-sum'), leftTd);
+        return tr;
+      }),
+    );
+  }
 
   /* Сайтаас «Засах» дарж ирэх --------------------------------------------- */
 
