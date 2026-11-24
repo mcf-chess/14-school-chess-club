@@ -77,7 +77,9 @@
 
   const confirmDialog = $('confirm-dialog');
 
-  function confirmDelete(text) {
+  function confirmDelete(text, { title = 'Устгах уу?', yes = 'Тийм, устгах' } = {}) {
+    $('confirm-title').textContent = title;
+    $('confirm-yes').textContent = yes;
     $('confirm-text').textContent = text;
     confirmDialog.showModal();
     $('confirm-no').focus(); // Санамсаргүй Enter дарахад устгахгүй.
@@ -1216,13 +1218,30 @@
   const ATT_STATUSES = ['Ирсэн', 'Тасалсан', 'Чөлөөтэй'];
   const WEEKDAYS = ['Ням', 'Даваа', 'Мягмар', 'Лхагва', 'Пүрэв', 'Баасан', 'Бямба'];
   const weekday = (iso) => new Date(iso + 'T00:00:00Z').getUTCDay();
+  const isClassDay = (iso) => [0, 6].includes(weekday(iso));
+  const addDays = (iso, n) => {
+    const date = new Date(iso + 'T00:00:00Z');
+    date.setUTCDate(date.getUTCDate() + n);
+    return date.toISOString().slice(0, 10);
+  };
+  const shortDate = (iso) => `${Number(iso.slice(5, 7))}/${Number(iso.slice(8, 10))}`;
 
   // Өнөөдөр Бямба/Ням бол өнөөдөр, үгүй бол дараагийн Бямба (анхны хичээлээс өмнө биш).
   function defaultClassDate() {
-    const date = new Date(today() + 'T00:00:00Z');
-    while (![0, 6].includes(date.getUTCDay())) date.setUTCDate(date.getUTCDate() + 1);
-    const iso = date.toISOString().slice(0, 10);
+    let iso = today();
+    while (!isClassDay(iso)) iso = addDays(iso, 1);
     return iso < FIRST_CLASS ? FIRST_CLASS : iso;
+  }
+
+  // Товчоор харуулах өдрүүд: сүүлийн 4 амралтын өдөр (8 хичээлийн өдөр) + дараагийн.
+  function classDays() {
+    const last = defaultClassDate();
+    const days = [];
+    for (let iso = FIRST_CLASS; iso <= last; iso = addDays(iso, 1)) {
+      if (isClassDay(iso)) days.push(iso);
+    }
+    if (weekday(last) === 6) days.push(addDays(last, 1)); // Бямба бол Нямыг нь ч харуулна
+    return days.slice(-8);
   }
 
   const attDate = $('att-date');
@@ -1230,6 +1249,7 @@
   let attShift = SHIFT_ORDER[0];
   let draft = new Map(); // registration_id → төлөв (хадгалаагүй)
   let draftKey = '';
+  let dirty = false;
 
   const sessionFor = (shift, date) => sessions.find((s) => s.shift === shift && s.class_date === date);
   const marksOf = (session) => (session ? attendance.filter((a) => a.session_id === session.id) : []);
@@ -1246,6 +1266,7 @@
     const key = `${attShift}|${attDate.value}`;
     if (key === draftKey) return;
     draftKey = key;
+    dirty = false;
     draft = new Map();
     const session = sessionFor(attShift, attDate.value);
     marksOf(session).forEach((a) => draft.set(a.registration_id, a.status));
@@ -1254,25 +1275,99 @@
     });
   }
 
+  // Хадгалаагүй өөрчлөлттэй бол өөр өдөр, ээлж рүү шилжихээс өмнө асууна.
+  async function leaveDraft() {
+    if (!dirty) return true;
+    return confirmDelete('Энэ ээлжийн ирц хадгалагдаагүй байна. Хадгалахгүйгээр өөр өдөр, ээлж рүү шилжвэл өөрчлөлт алга болно.', {
+      title: 'Ирц хадгалаагүй байна',
+      yes: 'Хадгалахгүй шилжих',
+    });
+  }
+
+  function renderDays() {
+    const days = classDays();
+    $('att-days').replaceChildren(
+      ...days.map((iso) => {
+        const done = SHIFT_ORDER.filter((shift) => sessionFor(shift, iso)).length;
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'att-day-chip';
+        button.setAttribute('role', 'tab');
+        button.setAttribute('aria-selected', String(iso === attDate.value));
+        button.append(
+          createElement('strong', `${shortDate(iso)} ${WEEKDAYS[weekday(iso)]}`),
+          createElement('span', done === 3 ? 'Бүгд ✓' : done > 0 ? `${done}/3 ээлж` : iso === today() ? 'Өнөөдөр' : '', done === 3 ? 'is-done' : ''),
+        );
+        button.addEventListener('click', async () => {
+          if (iso === attDate.value || !(await leaveDraft())) return;
+          attDate.value = iso;
+          renderAttendance();
+        });
+        return button;
+      }),
+    );
+  }
+
+  function renderCounts() {
+    const roll = rollFor(attShift, attDate.value);
+    const count = (status) => roll.filter((r) => draft.get(r.id) === status).length;
+    $('att-counts').replaceChildren(
+      ...ATT_STATUSES.map((status) => {
+        const chip = createElement('span', null, 'att-count');
+        chip.dataset.status = status;
+        chip.append(createElement('strong', String(count(status))), ` ${status}`);
+        return chip;
+      }),
+      createElement('span', `Нийт ${roll.length} хүүхэд`, 'att-total'),
+    );
+  }
+
+  function renderSaveState() {
+    const session = sessionFor(attShift, attDate.value);
+    const state = $('att-state');
+    if (dirty) {
+      state.textContent = 'Хадгалаагүй өөрчлөлт байна';
+      state.className = 'att-state is-dirty';
+    } else if (session) {
+      state.textContent = 'Ирц хадгалагдсан ✓';
+      state.className = 'att-state is-done';
+    } else {
+      state.textContent = 'Ирц хадгалагдаагүй';
+      state.className = 'att-state';
+    }
+    $('att-save').textContent = session && !dirty ? 'Дахин хадгалах' : 'Ирц хадгалах';
+    $('att-delete').hidden = !session;
+  }
+
+  function leftLabel(r, session) {
+    // Энэ хичээлийг хадгалаагүй бол хадгалсны дараах үлдэгдлийг харуулна.
+    const after = leftOf(r) - (session && marksOf(session).some((a) => a.registration_id === r.id) ? 0 : 1);
+    if (boughtOf(r) === 0) return ['Төлбөр төлөөгүй', 'is-unpaid'];
+    if (after < 0) return [`Төлөх (${-after} хичээл өртэй)`, 'is-unpaid'];
+    if (after === 0) return ['Энэ хичээлээр дуусна', 'is-low'];
+    return [`${after} хичээл үлдэнэ`, after <= LOW_LESSONS ? 'is-low' : 'is-paid'];
+  }
+
   function renderAttendance() {
     if (!attDate.value) return;
     const date = attDate.value;
-    const day = weekday(date);
-    $('att-day').textContent = `${WEEKDAYS[day]} гараг` + ([0, 6].includes(day) ? '' : ' (хичээлийн өдөр биш)');
-    $('att-day').classList.toggle('is-warn', ![0, 6].includes(day));
+    renderDays();
+    $('att-day').textContent =
+      `${dateLabel(date)}, ${WEEKDAYS[weekday(date)]} гараг` + (isClassDay(date) ? '' : '. Энэ өдөр хичээлийн өдөр биш.');
+    $('att-day').classList.toggle('is-warn', !isClassDay(date));
 
     $('att-shift-tabs').replaceChildren(
       ...SHIFT_ORDER.map((shift) => {
         const session = sessionFor(shift, date);
-        const count = rollFor(shift, date).length;
         return shiftButton(
           shift,
           shift === attShift,
           [
-            [`${count} хүүхэд`],
+            [`${rollFor(shift, date).length} хүүхэд`],
             session ? ['Ирц хадгалагдсан ✓', 'is-done'] : ['Ирц бүртгээгүй', 'is-due'],
           ],
-          () => {
+          async () => {
+            if (shift === attShift || !(await leaveDraft())) return;
             attShift = shift;
             renderAttendance();
           },
@@ -1281,13 +1376,10 @@
     );
 
     resetDraft();
+    renderCounts();
+    renderSaveState();
     const session = sessionFor(attShift, date);
     const roll = rollFor(attShift, date);
-    $('att-state').textContent = session
-      ? `Ирц хадгалагдсан. ${marksOf(session).filter((a) => a.status === 'Ирсэн').length}/${marksOf(session).length} ирсэн.`
-      : 'Энэ хичээлийн ирц хадгалагдаагүй байна.';
-    $('att-state').classList.toggle('is-done', Boolean(session));
-    $('att-delete').hidden = !session;
 
     if (roll.length === 0) {
       const tr = document.createElement('tr');
@@ -1300,19 +1392,10 @@
     $('att-rows').replaceChildren(
       ...roll.map((r, i) => {
         const tr = document.createElement('tr');
+        tr.dataset.status = draft.get(r.id);
         const name = document.createElement('td');
         name.append(createElement('strong', r.child_name));
         if (r.shift !== attShift) name.append(createElement('small', `Одоо ${r.shift} ээлжид`));
-
-        const left = leftOf(r);
-        const leftCell = document.createElement('td');
-        leftCell.append(
-          createElement(
-            'span',
-            boughtOf(r) === 0 ? 'Төлөөгүй' : left <= 0 ? 'Төлөх' : `${left}`,
-            `pay-pill ${boughtOf(r) === 0 || left <= 0 ? 'is-unpaid' : left <= LOW_LESSONS ? 'is-low' : 'is-paid'}`,
-          ),
-        );
 
         const choice = createElement('td', null, 'att-choice');
         const group = document.createElement('div');
@@ -1326,30 +1409,44 @@
           button.setAttribute('role', 'radio');
           button.setAttribute('aria-checked', String(draft.get(r.id) === status));
           button.addEventListener('click', () => {
+            if (draft.get(r.id) === status) return;
             draft.set(r.id, status);
+            dirty = true;
+            tr.dataset.status = status;
             group.querySelectorAll('button').forEach((b) =>
               b.setAttribute('aria-checked', String(b.dataset.status === status)),
             );
-            $('att-state').textContent = 'Өөрчлөлт хадгалагдаагүй байна.';
-            $('att-state').classList.remove('is-done');
+            renderCounts();
+            renderSaveState();
           });
           group.append(button);
         });
         choice.append(group);
 
-        tr.append(createElement('td', String(i + 1), 'reg-num'), name, leftCell, choice);
+        const [text, kind] = leftLabel(r, session);
+        const leftCell = document.createElement('td');
+        leftCell.append(createElement('span', text, `pay-pill ${kind}`));
+
+        tr.append(createElement('td', String(i + 1), 'reg-num'), name, choice, leftCell);
         return tr;
       }),
     );
   }
 
-  attDate.addEventListener('change', renderAttendance);
+  attDate.addEventListener('change', async () => {
+    const wanted = attDate.value;
+    attDate.value = draftKey.split('|')[1] || wanted;
+    if (!(await leaveDraft())) return;
+    attDate.value = wanted;
+    renderAttendance();
+  });
 
   $('att-all-present').addEventListener('click', () => {
-    rollFor(attShift, attDate.value).forEach((r) => draft.set(r.id, 'Ирсэн'));
+    rollFor(attShift, attDate.value).forEach((r) => {
+      if (draft.get(r.id) !== 'Ирсэн') dirty = true;
+      draft.set(r.id, 'Ирсэн');
+    });
     renderAttendance();
-    $('att-state').textContent = 'Өөрчлөлт хадгалагдаагүй байна.';
-    $('att-state').classList.remove('is-done');
   });
 
   $('att-save').addEventListener('click', async () => {
@@ -1377,7 +1474,7 @@
         const finished = roll.filter((r) => boughtOf(r) > 0 && leftOf(r) <= 0).length;
         showStatus(
           `${dateLabel(date)}, ${attShift} ээлжийн ирц хадгалагдлаа.` +
-            (finished ? ` ${finished} хүүхдийн төлсөн хичээл дууссан.` : ''),
+            (finished ? ` ${finished} хүүхдийн төлсөн хичээл дууссан, «Бүртгэл, төлбөр» хэсгээс харна уу.` : ''),
         );
         renderAttendance();
         renderRegistrations();

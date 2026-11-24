@@ -224,19 +224,25 @@
 
         <!-- Ирц -->
         <section id="panel-attendance" role="tabpanel" aria-labelledby="tab-attendance" hidden>
-          <div class="att-date">
-            <label for="att-date">Хичээлийн өдөр</label>
-            <input id="att-date" type="date" />
-            <span id="att-day" class="att-day"></span>
+          <h2 class="att-step"><span>1</span> Өдрөө сонгоно</h2>
+          <div class="att-days-row">
+            <div id="att-days" class="att-days" role="tablist" aria-label="Хичээлийн өдөр"></div>
+            <label class="att-other-day">
+              Өөр өдөр
+              <input id="att-date" type="date" />
+            </label>
           </div>
+          <p id="att-day" class="att-day"></p>
 
+          <h2 class="att-step"><span>2</span> Ээлжээ сонгоно</h2>
           <div id="att-shift-tabs" class="shift-tabs" role="tablist" aria-label="Ээлж"></div>
 
-          <div class="reg-toolbar">
-            <p id="att-state" class="att-state" role="status"></p>
-            <button id="att-all-present" class="admin-button" type="button">Бүгдийг «Ирсэн» болгох</button>
-            <button id="att-save" class="button gold" type="button">Ирц хадгалах</button>
-          </div>
+          <h2 class="att-step"><span>3</span> Ирээгүй хүүхдийг тэмдэглээд хадгална</h2>
+          <p class="admin-hint att-howto">
+            Бүх хүүхэд анхнаасаа «Ирсэн» байна. Ирээгүй хүүхдийн мөрөнд «Тасалсан» эсвэл «Чөлөөтэй»
+            дарна. Аль нь ч бай 8 хичээлээс нэг хасагдана.
+          </p>
+          <div id="att-counts" class="att-counts" aria-live="polite"></div>
 
           <div class="reg-table-wrap">
             <table class="reg-table att-table">
@@ -244,15 +250,20 @@
                 <tr>
                   <th scope="col">№</th>
                   <th scope="col">Хүүхэд</th>
-                  <th scope="col">Үлдсэн хичээл</th>
                   <th scope="col">Ирц</th>
+                  <th scope="col">Үлдсэн хичээл</th>
                 </tr>
               </thead>
               <tbody id="att-rows"></tbody>
             </table>
           </div>
+
+          <div class="att-savebar">
+            <p id="att-state" class="att-state" role="status"></p>
+            <button id="att-all-present" class="admin-button" type="button">Бүгдийг «Ирсэн» болгох</button>
+            <button id="att-save" class="button gold" type="button">Ирц хадгалах</button>
+          </div>
           <p class="admin-hint">
-            Ирц хадгалахад жагсаалтын хүүхэд бүрийн 8 хичээлээс нэг хасагдана.
             <button id="att-delete" class="link-button" type="button" hidden>Энэ хичээлийн ирцийг устгах</button>
           </p>
         </section>
