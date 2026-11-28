@@ -60,14 +60,84 @@
   birthInput.max = yearsAgo(3);
   birthInput.min = yearsAgo(19);
 
-  // Сургуулиас хамаарч ангийн талбарын шошгыг солино.
+  // Сургуулиас хамаарч бүлгийн талбарын шошгыг солино.
   form.querySelectorAll('input[name="school"]').forEach((radio) => {
     radio.addEventListener('change', () => {
       const other = radio.value === 'other';
-      $('reg-grade-label').textContent = other ? 'Сургууль, анги' : 'Анги';
-      $('reg-grade').placeholder = other ? '23-р сургууль, 3б' : '3б';
+      $('reg-grade-label').replaceChildren(
+        other ? 'Сургууль, бүлэг ' : 'Бүлэг ',
+        el('span', '(заавал биш)', 'optional'),
+      );
+      $('reg-grade').placeholder = other ? '23-р сургууль, б' : 'б';
     });
   });
+
+  /* Ээлж: ангиас хамаарч сонголт гарна, ээлж бүрт CLUB.capacity хүүхэд ------- */
+
+  const slots = (club.slots || []).map((slot) => ({ ...slot, shift: `${slot.start}–${slot.end}` }));
+  const capacity = club.capacity || 26;
+  const shiftBox = $('reg-shifts');
+  const gradeSelect = $('reg-grade-num');
+  shiftBox.classList.add('shifts');
+  let taken = null; // { '10:00–11:00': 24, ... }, серверээс
+
+  async function loadAvailability() {
+    try {
+      const rows = await Backend.callPublic('shift_availability', {});
+      taken = Object.fromEntries((rows || []).map((row) => [row.shift, row.taken]));
+    } catch {
+      taken = null; // Тоо авч чадаагүй ч бүртгэл ажиллана; сервер дүүргэлтийг шалгана.
+    }
+    renderShifts();
+  }
+
+  function renderShifts() {
+    const grade = Number(gradeSelect.value);
+    const chosen = form.querySelector('input[name="shift"]:checked')?.value;
+    const hint = $('reg-shift-hint');
+    if (!grade) {
+      shiftBox.replaceChildren();
+      hint.textContent = `Ангиа сонгоход тохирох ээлж гарна. Ээлж бүрт ${capacity} хүүхэд.`;
+      return;
+    }
+    const fit = slots.filter((slot) => slot.grades?.includes(grade));
+    let open = 0;
+    shiftBox.replaceChildren(
+      ...fit.map((slot) => {
+        const left = taken ? Math.max(0, capacity - (taken[slot.shift] || 0)) : null;
+        const full = left === 0;
+        if (!full) open += 1;
+        const label = document.createElement('label');
+        const input = document.createElement('input');
+        input.type = 'radio';
+        input.name = 'shift';
+        input.value = slot.shift;
+        input.disabled = full;
+        input.checked = !full && slot.shift === chosen;
+        const span = el('span');
+        span.append(
+          slot.shift,
+          el('small', slot.who),
+          el('small', full ? 'Дүүрсэн' : left == null ? '' : `${left} суудал үлдсэн`, `seats${full ? ' is-full' : ''}`),
+        );
+        label.append(input, ' ', span);
+        return label;
+      }),
+    );
+    if (fit.length && open === 0) {
+      hint.textContent = `${grade}-р ангийн ээлж дүүрсэн байна. Багштай холбогдоно уу: ${club.phone || ''}`;
+    } else if (fit.length === 1) {
+      hint.textContent = `${grade}-р анги ${fit[0].shift} цагт хичээллэнэ.`;
+    } else {
+      hint.textContent = `${grade}-р ангийнхан эдгээр ээлжээс сонгоно.`;
+    }
+    // Ганц сул ээлж байвал автоматаар сонгоно.
+    const free = shiftBox.querySelectorAll('input:not(:disabled)');
+    if (free.length === 1) free[0].checked = true;
+  }
+
+  gradeSelect.addEventListener('change', renderShifts);
+  loadAvailability();
 
   /* Бүртгүүлэх ------------------------------------------------------------ */
 
@@ -77,7 +147,12 @@
     const data = new FormData(form);
     const child = String(data.get('child') || '').trim();
     const birth = String(data.get('birth') || '');
-    const grade = String(data.get('grade') || '').trim();
+    const gradeNum = String(data.get('gradeNum') || '');
+    const group = String(data.get('grade') || '').trim();
+    const grade =
+      data.get('school') === 'other'
+        ? [group, `${gradeNum}-р анги`].filter(Boolean).join(', ')
+        : `${gradeNum}${group}`;
     const parent = String(data.get('parent') || '').trim();
     const phone = digits(String(data.get('phone') || ''));
     const checks = [
@@ -88,9 +163,15 @@
         'Хүүхдийн төрсөн он, сар, өдрийг зөв оруулна уу (3–18 настай).',
       ],
       [data.get('school'), 'school', 'Аль сургуулийн сурагч болохыг сонгоно уу.'],
-      [grade.length >= 1, 'reg-grade', 'Хүүхдийн ангийг бичнэ үү.'],
+      [gradeNum, 'reg-grade-num', 'Хүүхдийн ангийг сонгоно уу.'],
       [data.get('experience'), 'reg-experience', 'Шатрын мэдлэгийг сонгоно уу.'],
-      [data.get('shift'), 'shift', 'Хүссэн ээлжээ сонгоно уу.'],
+      [
+        data.get('shift'),
+        shiftBox.querySelector('input:not(:disabled)') ? 'shift' : 'reg-grade-num',
+        shiftBox.querySelector('input:not(:disabled)')
+          ? 'Ээлжээ сонгоно уу.'
+          : 'Энэ ангийн ээлж дүүрсэн байна. Багштай утсаар холбогдоно уу.',
+      ],
       [parent.length >= 2, 'reg-parent', 'Эцэг эх, асран хамгаалагчийн нэрийг бичнэ үү.'],
       [/^\d{8}$/.test(phone), 'reg-phone', 'Утасны дугаар 8 оронтой байх ёстой.'],
       [data.get('consent'), 'reg-consent', 'Мэдээлэл хадгалах зөвшөөрлийг тэмдэглэнэ үү.'],
@@ -135,6 +216,7 @@
       showDone(await Backend.callPublic('submit_registration', result.args));
     } catch (error) {
       errorLine.textContent = error?.message || 'Алдаа гарлаа. Дахин оролдоно уу.';
+      if (/дүүрсэн/i.test(errorLine.textContent)) loadAvailability();
     } finally {
       submit.disabled = false;
       submit.textContent = 'Бүртгүүлэх';

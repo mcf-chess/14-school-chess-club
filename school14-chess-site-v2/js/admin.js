@@ -831,7 +831,12 @@
   const FEES = (typeof CLUB !== 'undefined' && CLUB.feeBySchool) || { 14: 100000, other: 250000 };
   const LESSONS_PER_PAYMENT = 8;
   const LOW_LESSONS = 2; // Ийм буюу цөөн хичээл үлдвэл «Төлбөр» товч гарна.
-  const SHIFT_ORDER = ['10:00–11:30', '12:00–13:30', '14:00–16:00'];
+  const SHIFT_ORDER = (typeof CLUB !== 'undefined' && CLUB.slots?.length
+    ? CLUB.slots.map((slot) => `${slot.start}–${slot.end}`)
+    : ['10:00–11:00', '11:00–12:00', '12:00–13:30', '14:00–16:00']);
+  const SHIFT_CAPACITY = (typeof CLUB !== 'undefined' && CLUB.capacity) || 26;
+  // 2026-11-28-ны хичээл хуучин хуваариар (10:00–11:30 гэх мэт) бүртгэгдсэн. Журналд огноогоор нь харуулна.
+  const isLegacySession = (session) => !SHIFT_ORDER.includes(session.shift);
 
 
   const today = () =>
@@ -884,11 +889,12 @@
         const list = inShift(shift);
         const ok = list.filter(hasLessons).length;
         const due = list.length - ok;
+        const seats = registrations.filter((r) => r.shift === shift && r.status !== 'Гарсан').length;
         return shiftButton(
           shift,
           shift === currentShift,
           [
-            [`${list.length} хүүхэд`],
+            [`${seats}/${SHIFT_CAPACITY} хүүхэд`, seats >= SHIFT_CAPACITY ? 'is-due' : ''],
             [`Төлсөн ${ok}, төлөх ${due}`, due > 0 ? 'is-due' : ''],
           ],
           () => {
@@ -1322,8 +1328,8 @@
           createElement('strong', `${shortDate(iso)} ${WEEKDAYS[weekday(iso)]}`),
           createElement(
             'span',
-            done === 3 ? 'Бүгд ✓' : done > 0 ? `${done}/3 ээлж` : iso === today() ? 'Өнөөдөр' : '',
-            done === 3 ? 'is-done' : '',
+            done === SHIFT_ORDER.length ? 'Бүгд ✓' : done > 0 ? `${done}/${SHIFT_ORDER.length} ээлж` : iso === today() ? 'Өнөөдөр' : '',
+            done === SHIFT_ORDER.length ? 'is-done' : '',
           ),
         );
         button.addEventListener('click', () => {
@@ -1634,14 +1640,25 @@
   });
 
   function renderJournal() {
-    const shiftSessions = sessions
-      .filter((x) => x.shift === journalShift)
-      .sort((a, b) => a.class_date.localeCompare(b.class_date));
-    const ids = new Set(shiftSessions.map((x) => x.id));
+    const own = sessions.filter((x) => x.shift === journalShift);
+    const ids = new Set(own.map((x) => x.id));
     const marked = new Set(attendance.filter((a) => ids.has(a.session_id)).map((a) => a.registration_id));
     const roll = registrations
       .filter((r) => marked.has(r.id) || (r.shift === journalShift && (r.status === 'Шинэ' || r.status === 'Идэвхтэй')))
       .sort(byName);
+    // Багана: энэ ээлжийн хичээл бүр + хуучин хуваарийн өдөр бүр (энэ хүүхдүүдийн аль нэгнийх нь ирцтэй бол).
+    const rollIds = new Set(roll.map((r) => r.id));
+    const legacyByDate = new Map();
+    sessions.filter(isLegacySession).forEach((session) => {
+      if (!attendance.some((a) => a.session_id === session.id && rollIds.has(a.registration_id))) return;
+      const column = legacyByDate.get(session.class_date) || { class_date: session.class_date, ids: [], legacy: true };
+      column.ids.push(session.id);
+      legacyByDate.set(session.class_date, column);
+    });
+    const shiftSessions = own
+      .map((session) => ({ ...session, ids: [session.id] }))
+      .concat([...legacyByDate.values()])
+      .sort((a, b) => a.class_date.localeCompare(b.class_date));
 
     $('att-journal-shifts').replaceChildren(
       ...SHIFT_ORDER.map((shift) =>
@@ -1664,7 +1681,8 @@
       th.className = 'journal-date';
       const button = createElement('button', null, 'journal-date-btn');
       button.type = 'button';
-      button.title = 'Энэ өдрийн ирцийг засах';
+      button.title = session.legacy ? 'Хуучин хуваарийн хичээл (засах боломжгүй)' : 'Энэ өдрийн ирцийг засах';
+      button.disabled = Boolean(session.legacy);
       button.append(
         createElement('span', shortDate(session.class_date)),
         createElement('small', WEEKDAYS[weekday(session.class_date)].slice(0, 2)),
@@ -1704,7 +1722,7 @@
         tr.append(name);
         let present = 0;
         shiftSessions.forEach((session) => {
-          const mark = attendance.find((a) => a.session_id === session.id && a.registration_id === r.id);
+          const mark = attendance.find((a) => session.ids.includes(a.session_id) && a.registration_id === r.id);
           const td = createElement('td', null, 'journal-cell');
           const cls = mark ? STATUS_CLASS[mark.status] : 'is-none';
           const i = createElement('i', mark ? MARK_SYMBOL[mark.status] : '·', `mark ${cls}`);

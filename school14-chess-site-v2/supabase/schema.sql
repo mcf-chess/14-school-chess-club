@@ -547,3 +547,38 @@ begin
     'reference', v_row.child_name || ' ' || v_row.parent_phone);
 end;
 $$;
+
+-- 10. Дөрвөн ээлж, ээлж бүрт 26 хүүхэд (2026-11-28) -------------------------
+-- 10:00–11:00 (1-р анги), 11:00–12:00 (1–2-р анги), 12:00–13:30 (3–5-р анги),
+-- 14:00–16:00 (6-р ангиас дээш). Хүүхдүүдийг шинэ ээлжид шилжүүлсэн (админ хэсгээс харна).
+-- 2026-11-28-ны хичээл хуучин 10:00–11:30 ээлжээр бүртгэгдсэн тул class_sessions-д үлдээв.
+
+alter table public.registrations drop constraint if exists registrations_shift_check;
+alter table public.class_sessions drop constraint if exists class_sessions_shift_check;
+update public.registrations set shift = '10:00–11:00' where shift = '10:00–11:30';
+alter table public.registrations add constraint registrations_shift_check
+  check (shift in ('10:00–11:00', '11:00–12:00', '12:00–13:30', '14:00–16:00'));
+alter table public.class_sessions add constraint class_sessions_shift_check
+  check (shift in ('10:00–11:00', '11:00–12:00', '12:00–13:30', '14:00–16:00', '10:00–11:30'));
+
+create or replace function public.shift_capacity() returns integer language sql immutable as $$ select 26 $$;
+
+create or replace function public.shift_availability()
+returns json
+language sql
+stable
+security definer
+set search_path to 'public'
+as $$
+  select json_agg(json_build_object('shift', s.shift, 'taken', coalesce(c.n, 0), 'capacity', public.shift_capacity()) order by s.ord)
+  from (values ('10:00–11:00', 1), ('11:00–12:00', 2), ('12:00–13:30', 3), ('14:00–16:00', 4)) as s(shift, ord)
+  left join (select shift, count(*) n from registrations where status <> 'Гарсан' group by shift) c on c.shift = s.shift
+$$;
+revoke all on function public.shift_availability() from public;
+grant execute on function public.shift_availability() to anon, authenticated;
+
+-- submit_registration (9-р хэсгийнх) дээр нэмэгдсэн шалгалт:
+--   if p_shift not in (...4 ээлж...) then raise exception 'shift_invalid'; end if;
+--   perform pg_advisory_xact_lock(hashtext('shift:' || p_shift));
+--   if (select count(*) from registrations where shift = p_shift and status <> 'Гарсан')
+--      >= public.shift_capacity() then raise exception 'shift_full'; end if;

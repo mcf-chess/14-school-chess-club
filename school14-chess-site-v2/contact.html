@@ -127,7 +127,7 @@
 
         <div class="steps">
           <h2 class="as-h3">Бүртгүүлэх алхам</h2>
-          <p class="limit-note">Бүлэг бүрт хүүхдийн тоо хязгаартай тул урьдчилан бүртгүүлнэ үү.</p>
+          <p class="limit-note">Ээлж бүрт 26 хүүхэд хүртэл тул урьдчилан бүртгүүлнэ үү.</p>
           <ol>
             <li>
               <div>
@@ -185,8 +185,30 @@
                   <label><input type="radio" name="school" value="other" /> <span>Бусад сургууль</span></label>
                 </div>
 
-                <label for="reg-grade" id="reg-grade-label">Анги</label>
-                <input id="reg-grade" name="grade" type="text" maxlength="80" placeholder="3б" required />
+                <div class="grade-row">
+                  <div>
+                    <label for="reg-grade-num">Анги</label>
+                    <select id="reg-grade-num" name="gradeNum" required>
+                      <option value="">Сонгоно уу</option>
+                    <option value="1">1-р анги</option>
+                    <option value="2">2-р анги</option>
+                    <option value="3">3-р анги</option>
+                    <option value="4">4-р анги</option>
+                    <option value="5">5-р анги</option>
+                    <option value="6">6-р анги</option>
+                    <option value="7">7-р анги</option>
+                    <option value="8">8-р анги</option>
+                    <option value="9">9-р анги</option>
+                    <option value="10">10-р анги</option>
+                    <option value="11">11-р анги</option>
+                    <option value="12">12-р анги</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label for="reg-grade" id="reg-grade-label">Бүлэг <span class="optional">(заавал биш)</span></label>
+                    <input id="reg-grade" name="grade" type="text" maxlength="60" placeholder="б" />
+                  </div>
+                </div>
 
                 <label for="reg-experience">Шатрын мэдлэг</label>
                 <select id="reg-experience" name="experience" required>
@@ -196,12 +218,9 @@
                   <option>Тэмцээнд оролцож байсан</option>
                 </select>
 
-                <span class="register-label" id="reg-shift-label">Хүссэн ээлж</span>
-                <div class="choice-options" role="radiogroup" aria-labelledby="reg-shift-label">
-                  <label><input type="radio" name="shift" value="10:00–11:30" required /> <span>10:00–11:30</span></label>
-                  <label><input type="radio" name="shift" value="12:00–13:30" /> <span>12:00–13:30</span></label>
-                  <label><input type="radio" name="shift" value="14:00–16:00" /> <span>14:00–16:00<small>Тэмцээний бэлтгэл</small></span></label>
-                </div>
+                <span class="register-label" id="reg-shift-label">Ээлж</span>
+                <p id="reg-shift-hint" class="register-hint">Ангиа сонгоход тохирох ээлж гарна. Ээлж бүрт 26 хүүхэд.</p>
+                <div id="reg-shifts" class="choice-options" role="radiogroup" aria-labelledby="reg-shift-label"></div>
               </fieldset>
 
               <fieldset>
@@ -272,8 +291,9 @@
             <details>
               <summary>Аль ээлжид хамрагдах вэ?</summary>
               <p>
-                Эхний хоёр ээлжийн бүлгийг багш хүүхдийн түвшинд тохируулан хуваарилна. 14:00–16:00
-                цагийн ээлж нь гүнзгийрүүлсэн сургалт, тэмцээний бэлтгэлд зориулагдана.
+                Ээлжийг хүүхдийн ангиар хуваарилна: 1-р анги 10:00–11:00 эсвэл 11:00–12:00, 2-р анги
+                11:00–12:00, 3–5-р анги 12:00–13:30, 6-р ангиас дээш 14:00–16:00 (тэмцээний бэлтгэл).
+                Ээлж бүрт 26 хүүхэд. Ээлж дүүрсэн бол бүртгэлийн маягтад «Дүүрсэн» гэж харагдана.
               </p>
             </details>
             <details>

@@ -701,7 +701,7 @@ label.admin-button:has(+ input:focus-visible) {
 
 .shift-tabs {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
   margin-bottom: 18px;
 }
@@ -914,7 +914,7 @@ label.admin-button:has(+ input:focus-visible) {
 
 @media (max-width: 720px) {
   .shift-tabs {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .shift-tab strong {
@@ -1502,7 +1502,7 @@ label.admin-button:has(+ input:focus-visible) {
 
   /* Ирц хэсэгт ээлжийн товчнууд нэг мөрөнд багтана */
   #panel-attendance .shift-tabs {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 6px;
   }
 
@@ -1716,4 +1716,13 @@ label.admin-button:has(+ input:focus-visible) {
 .att-howto {
   margin: 0 0 14px;
   line-height: 1.5;
+}
+
+.journal-date-btn:disabled {
+  cursor: default;
+  opacity: 0.75;
+}
+
+.journal-date-btn:disabled:hover {
+  background: transparent;
 }
