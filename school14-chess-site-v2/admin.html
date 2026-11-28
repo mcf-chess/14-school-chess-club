@@ -29,6 +29,7 @@
     <script src="js/site-config.js" defer></script>
     <script src="js/backend-config.js" defer></script>
     <script src="js/backend.js" defer></script>
+    <script src="js/xlsx.js" defer></script>
     <script src="js/admin.js" defer></script>
   </head>
   <body class="admin-page">
@@ -197,7 +198,7 @@
             <input id="reg-search" type="search" placeholder="Нэр, утсаар хайх" aria-label="Нэр, утсаар хайх" />
             <label class="reg-check"><input id="reg-unpaid" type="checkbox" /> Зөвхөн төлөөгүй</label>
             <label class="reg-check"><input id="reg-left" type="checkbox" /> Гарсныг харуулах</label>
-            <button id="reg-export" class="admin-button" type="button">Excel-д татах</button>
+            <button id="reg-export" class="admin-button" type="button">Excel татах (бүх ээлж)</button>
           </div>
 
           <div class="reg-table-wrap">
@@ -243,35 +244,33 @@
           <h2 class="att-step"><span>2</span> Ээлжээ сонгоно</h2>
           <div id="att-shift-tabs" class="shift-tabs" role="tablist" aria-label="Ээлж"></div>
 
-          <h2 class="att-step"><span>3</span> Ирээгүй хүүхдийг тэмдэглээд хадгална</h2>
+          <h2 class="att-step"><span>3</span> Ирсэн хүүхдийн нэр дээр дарна</h2>
           <p class="admin-hint att-howto">
-            Бүх хүүхэд анхнаасаа «Ирсэн» байна. Ирээгүй хүүхдэд л «Тасалсан» эсвэл «Чөлөөтэй» дарна.
-            Аль нь ч бай 8 хичээлээс нэг хасагдана. Хүүхдийн нэрийн доорх 8 цэг нь төлсөн 8 хичээлийн явц:
-            <span class="dot-inline is-present"></span> ирсэн, <span class="dot-inline is-absent"></span> тасалсан,
-            <span class="dot-inline is-excused"></span> чөлөөтэй, <span class="dot-inline"></span> үлдсэн.
+            Нэр дээр дармагц <b>«Ирсэн»</b> болж шууд хадгалагдана. Андуурвал дахин дарна. Чөлөө авсан
+            хүүхдэд «Чөлөө» товчийг дарна. Өөр ээлжийн хүүхэд ирсэн бол нэрээр нь хайгаад дарна.
           </p>
-          <div id="att-counts" class="att-counts" aria-live="polite"></div>
 
-          <div class="reg-table-wrap">
-            <table class="reg-table att-table">
-              <thead>
-                <tr>
-                  <th scope="col">№</th>
-                  <th scope="col">Хүүхэд</th>
-                  <th scope="col">Ирц</th>
-                </tr>
-              </thead>
-              <tbody id="att-rows"></tbody>
-            </table>
+          <div class="att-tools">
+            <input id="att-search" type="search" placeholder="Нэрээр хайх (бүх ээлжээс)" aria-label="Нэрээр хайх" autocomplete="off" />
+            <div id="att-counts" class="att-counts" aria-live="polite"></div>
+          </div>
+
+          <div id="att-grid" class="att-grid" aria-label="Хүүхдүүд"></div>
+          <div id="att-others" class="att-others" hidden>
+            <h3>Бусад ээлжийн хүүхэд</h3>
+            <p class="admin-hint">Дарвал энэ хичээлд ирсэн гэж бүртгэгдэнэ. Хүүхдийн ээлж өөрчлөгдөхгүй.</p>
+            <div id="att-others-grid" class="att-grid"></div>
           </div>
 
           <div class="att-savebar">
             <p id="att-state" class="att-state" role="status"></p>
-            <button id="att-all-present" class="admin-button" type="button">Бүгдийг «Ирсэн» болгох</button>
-            <button id="att-save" class="button gold" type="button">Ирц хадгалах</button>
+            <button id="att-finish" class="button gold" type="button">Хичээл дуусгах</button>
           </div>
           <p class="admin-hint">
-            <button id="att-delete" class="link-button" type="button" hidden>Энэ хичээлийн ирцийг устгах</button>
+            «Хичээл дуусгах» нь ирц бүртгэгдээгүй, төлбөр төлсөн хүүхдүүдийг «Тасалсан» болгоно (8 хичээлээс
+            хасагдана). Төлбөр төлөөгүй хүүхдийн ирцийг бүртгэхгүй. Бүртгэлгүй хүүхэд ирвэл эцэг эхээр нь
+            school14chess.com-оор бүртгүүлүүлнэ.
+            <button id="att-delete" class="link-button" type="button" hidden>Энэ хичээлийн ирцийг бүхэлд нь устгах</button>
           </p>
           </div>
 

@@ -461,3 +461,89 @@ create policy "Админ ирцийг удирдана" on public.attendance
   for all to authenticated
   using ((select public.is_admin()))
   with check ((select public.is_admin()));
+
+-- Сарын тооцоо 8 хичээлийн багцаар солигдсон тул next_due_date-ийг сайт ашиглахаа больсон.
+revoke execute on function public.next_due_date(uuid) from authenticated;
+
+-- 9. Давхар бүртгэлээс сэргийлэх (2026-11-28) -------------------------------
+-- Ижил утас + төрсөн өдөр + хүүхдийн өөрийн нэр (сүүлийн 3+ үсэгтэй үг) бол
+-- шинээр бүртгэхгүй, хуучин бүртгэлийг нь буцаана. Өөр нэртэй ихэр бүртгэгдэнэ.
+
+create or replace function public.given_name(p text)
+returns text
+language sql
+immutable
+set search_path to 'public'
+as $$
+  select t.tok
+  from regexp_split_to_table(lower(coalesce(p, '')), '[^а-яөүёa-z]+') with ordinality as t(tok, ord)
+  where length(t.tok) >= 3
+  order by t.ord desc
+  limit 1
+$$;
+
+create or replace function public.submit_registration(
+  p_child_name text, p_birth_date date, p_school_type text, p_school_grade text,
+  p_parent_name text, p_parent_phone text, p_shift text, p_experience text,
+  p_note text, p_consent boolean)
+returns json
+language plpgsql
+security definer
+set search_path to 'public'
+as $$
+declare
+  v_phone text := regexp_replace(coalesce(p_parent_phone, ''), '\D', '', 'g');
+  v_today date := (now() at time zone 'Asia/Ulaanbaatar')::date;
+  v_fee   integer;
+  v_row   registrations%rowtype;
+begin
+  if length(v_phone) = 11 and left(v_phone, 3) = '976' then
+    v_phone := right(v_phone, 8);
+  end if;
+  if coalesce(p_consent, false) is not true then
+    raise exception 'consent_required';
+  end if;
+  if p_birth_date is null or p_birth_date > v_today - interval '3 years'
+     or p_birth_date < v_today - interval '19 years' then
+    raise exception 'birth_date_invalid';
+  end if;
+  v_fee := case p_school_type when '14' then 100000 when 'other' then 250000 end;
+  if v_fee is null then
+    raise exception 'school_type_required';
+  end if;
+
+  select * into v_row from registrations
+   where parent_phone = v_phone and birth_date = p_birth_date and status <> 'Гарсан'
+     and public.given_name(child_name) = public.given_name(p_child_name)
+   order by created_at limit 1;
+  if found then
+    return json_build_object(
+      'duplicate', true,
+      'fee', v_row.monthly_fee,
+      'shift', v_row.shift,
+      'reference', v_row.child_name || ' ' || v_row.parent_phone);
+  end if;
+
+  if (select count(*) from registrations
+        where parent_phone = v_phone and created_at > now() - interval '24 hours') >= 5
+     or (select count(*) from registrations
+        where created_at > now() - interval '10 minutes') >= 30 then
+    raise exception 'too_many_registrations';
+  end if;
+
+  insert into registrations
+    (child_name, birth_date, school_type, monthly_fee, school_grade, parent_name, parent_phone,
+     shift, experience, note, consent_data)
+  values
+    (btrim(p_child_name), p_birth_date, p_school_type, v_fee, btrim(p_school_grade),
+     btrim(p_parent_name), v_phone, p_shift, nullif(p_experience, ''), nullif(btrim(p_note), ''), true)
+  returning * into v_row;
+
+  return json_build_object(
+    'duplicate', false,
+    'fee', v_row.monthly_fee,
+    'shift', v_row.shift,
+    'start_date', v_row.start_date,
+    'reference', v_row.child_name || ' ' || v_row.parent_phone);
+end;
+$$;

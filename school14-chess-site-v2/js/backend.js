@@ -265,6 +265,15 @@ const Backend = (() => {
     });
   }
 
+  /** Шүүлтүүрээр устгах (жишээ нь ирц: session_id=eq.X&registration_id=eq.Y). */
+  async function removeWhere(table, filter) {
+    return request(`/rest/v1/${table}?${filter}`, {
+      method: 'DELETE',
+      headers: { Prefer: 'return=representation' },
+      token: await accessToken(),
+    });
+  }
+
   async function removePhoto(path) {
     await request(photoPath(path), { method: 'DELETE', token: await accessToken() });
   }
@@ -299,6 +308,7 @@ const Backend = (() => {
     list,
     insert,
     upsert,
+    removeWhere,
     update,
     remove,
     uploadPhoto,

@@ -1519,3 +1519,201 @@ label.admin-button:has(+ input:focus-visible) {
     font-size: 12px;
   }
 }
+
+/* Ирц: нэр дээр дарж бүртгэх карт ---------------------------------------- */
+
+.att-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 16px;
+  margin-bottom: 12px;
+}
+
+.att-tools input[type='search'] {
+  flex: 1 1 260px;
+  min-height: 48px;
+  padding: 8px 14px;
+  border: 1px solid #8f9bb8;
+  border-radius: 12px;
+  background: var(--body);
+  font-size: 17px;
+}
+
+.att-tools .att-counts {
+  margin: 0;
+}
+
+.att-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 10px;
+}
+
+.att-tile {
+  display: flex;
+  align-items: stretch;
+  overflow: hidden;
+  border: 2px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  transition: border-color 0.15s, background-color 0.15s;
+}
+
+.att-tile[data-status='Ирсэн'] {
+  border-color: #2f7a2a;
+  background: #e5f3e1;
+}
+
+.att-tile[data-status='Тасалсан'] {
+  border-color: #c97b66;
+  background: #fbebe6;
+}
+
+.att-tile[data-status='Чөлөөтэй'] {
+  border-color: #d39a2f;
+  background: #fdf3df;
+}
+
+.att-tile.is-saving {
+  opacity: 0.6;
+}
+
+.att-tile-main {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 12px;
+  min-height: 68px;
+  padding: 10px 12px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.att-tile-main:focus-visible,
+.att-leave:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: -3px;
+}
+
+.att-check {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 2px solid #b9a888;
+  border-radius: 50%;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.att-tile[data-status='Ирсэн'] .att-check {
+  border-color: #2f7a2a;
+  background: #2f7a2a;
+  color: #fff;
+}
+
+.att-tile[data-status='Тасалсан'] .att-check {
+  border-color: #b5462b;
+  background: #b5462b;
+  color: #fff;
+}
+
+.att-tile[data-status='Чөлөөтэй'] .att-check {
+  border-color: #d39a2f;
+  background: #d39a2f;
+  color: #2a2118;
+}
+
+.att-tile-text {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.att-tile-text strong {
+  font-size: 16px;
+  line-height: 1.25;
+}
+
+.att-tile-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+
+.att-tile-meta .pay-pill {
+  font-size: 12px;
+}
+
+.att-other-shift {
+  color: #a0520c;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.att-leave {
+  flex: 0 0 auto;
+  min-width: 64px;
+  padding: 0 10px;
+  border: 0;
+  border-left: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.att-leave[aria-pressed='true'] {
+  background: #d39a2f;
+  color: #2a2118;
+}
+
+.att-others {
+  margin-top: 18px;
+  padding: 14px;
+  border: 1px dashed #c9b89c;
+  border-radius: 14px;
+}
+
+.att-others h3 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.att-others .admin-hint {
+  margin: 4px 0 10px;
+}
+
+#att-finish {
+  min-height: 50px;
+  padding-inline: 24px;
+  border: 0;
+  font-size: 16px;
+}
+
+@media (max-width: 720px) {
+  .att-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .att-tile-main {
+    min-height: 64px;
+  }
+
+  .att-savebar #att-finish {
+    flex: 1 1 100%;
+  }
+}
+
+.att-howto {
+  margin: 0 0 14px;
+  line-height: 1.5;
+}

@@ -171,6 +171,11 @@
   }
 
   function showDone(done) {
+    // Ижил хүүхэд аль хэдийн бүртгэлтэй бол шинэ бүртгэл үүсээгүй гэдгийг мэдэгдэнэ.
+    $('done-title').textContent = done.duplicate ? 'Энэ хүүхэд аль хэдийн бүртгэлтэй байна' : 'Бүртгэл хүлээн авлаа';
+    $('done-lede').textContent = done.duplicate
+      ? `Дахин бүртгүүлэх шаардлагагүй. Бүртгэлтэй ээлж: ${done.shift}. Ээлж солих бол ${club.phone || '+976 80344372'} дугаараар багшид хандана уу. Төлбөр төлөөгүй бол доорх дансанд шилжүүлнэ үү.`
+      : 'Эхний 8 хичээлийн төлбөрөө доорх дансанд шилжүүлнэ үү.';
     const summary = $('done-summary');
     summary.replaceChildren();
     addRow(summary, 'Төлөх дүн', money(done.fee), { className: 'is-amount' });

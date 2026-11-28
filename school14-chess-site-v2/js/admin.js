@@ -146,7 +146,7 @@
     payments = [];
     sessions = [];
     attendance = [];
-    $('att-rows').replaceChildren();
+    $('att-grid').replaceChildren();
     $('att-shift-tabs').replaceChildren();
     $('reg-rows').replaceChildren();
     $('shift-tabs').replaceChildren();
@@ -1189,33 +1189,73 @@
   }
 
   // Харагдаж буй жагсаалтыг Excel-д нээгдэх CSV болгон татна.
+  // Бүх ээлжийн хүүхдийг Excel (.xlsx) файлаар татна. Сонгосон ээлж, хайлтаас үл хамаарна.
+  // «Бүх хүүхэд» хуудас + ээлж бүрийн тусдаа хуудас. «Гарсныг харуулах» чагтлаагүй бол гарсан хүүхэд орохгүй.
   $('reg-export').addEventListener('click', () => {
-    const header = [
-      'Хүүхдийн нэр', 'Төрсөн өдөр', 'Сургууль', 'Анги', 'Мэдлэг', 'Ээлж', 'Эцэг/эх', 'Утас',
-      'Төлөв', 'Төлбөрийн дүн', 'Төлсөн хичээл', 'Суусан', 'Үлдсэн',
+    const columns = [
+      { header: '№', width: 5 },
+      { header: 'Ээлж', width: 13 },
+      { header: 'Хүүхдийн нэр', width: 28 },
+      { header: 'Төрсөн өдөр', width: 12 },
+      { header: 'Нас', width: 6 },
+      { header: 'Сургууль', width: 14 },
+      { header: 'Анги', width: 16 },
+      { header: 'Шатрын мэдлэг', width: 20 },
+      { header: 'Эцэг/эх', width: 22 },
+      { header: 'Утас', width: 11 },
+      { header: 'Төлөв', width: 12 },
+      { header: 'Төлбөрийн дүн', width: 13 },
+      { header: 'Төлсөн хичээл', width: 13 },
+      { header: 'Суусан', width: 8 },
+      { header: 'Үлдсэн', width: 8 },
+      { header: 'Сүүлд төлсөн', width: 13 },
+      { header: 'Бүртгүүлсэн', width: 12 },
+      { header: 'Тэмдэглэл', width: 40 },
     ];
-    const cell = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
-    const lines = visibleRegistrations().map((r) =>
-      [
-        r.child_name, r.birth_date, r.school_type === '14' ? '14-р сургууль' : 'Бусад',
-        r.school_grade, r.experience, r.shift, r.parent_name, r.parent_phone, r.status,
-        r.monthly_fee, boughtOf(r), usedOf(r), leftOf(r),
-      ].map(cell).join(','),
-    );
-    const blob = new Blob(['﻿' + [header.map(cell).join(','), ...lines].join('\r\n')], {
-      type: 'text/csv;charset=utf-8',
+    const rowOf = (r, i) => {
+      const paid = paymentsOf(r);
+      const last = paid[paid.length - 1];
+      return [
+        i + 1, r.shift, r.child_name, r.birth_date || '', r.birth_date ? ageOf(r.birth_date) : '',
+        r.school_type === '14' ? '14-р сургууль' : 'Бусад', r.school_grade || '', r.experience || '',
+        r.parent_name || '', r.parent_phone || '', r.status, Number(r.monthly_fee) || 0,
+        boughtOf(r), usedOf(r), leftOf(r), last ? last.paid_on || last.period_start : '',
+        (r.created_at || '').slice(0, 10), [r.note, r.admin_note].filter(Boolean).join(' / '),
+      ];
+    };
+    const all = registrations
+      .filter((r) => showLeft() || r.status !== 'Гарсан')
+      .sort((a, b) => SHIFT_ORDER.indexOf(a.shift) - SHIFT_ORDER.indexOf(b.shift) || byName(a, b));
+
+    const sheets = [{ name: `Бүх хүүхэд (${all.length})`, columns, rows: all.map(rowOf) }];
+    SHIFT_ORDER.forEach((shift) => {
+      const list = all.filter((r) => r.shift === shift);
+      sheets.push({ name: `${shift.replace(/:/g, '.')} (${list.length})`, columns, rows: list.map(rowOf) });
     });
+
+    const blob = MiniXlsx.build(sheets);
+    // Файлын нэрэнд цаг оруулж, өмнө татсан файлтай андуурагдахаас сэргийлнэ.
+    const time = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Ulaanbaatar', hour: '2-digit', minute: '2-digit' })
+      .format(new Date())
+      .replace(':', '');
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = `burtgel-${today()}.csv`;
+    link.download = `burtgel-buh-eelj-${today()}-${time}.xlsx`;
+    document.body.append(link);
     link.click();
-    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(link.href), 2000);
+    showStatus(`Excel файл татагдлаа: нийт ${all.length} хүүхэд (${SHIFT_ORDER.map((s) => `${s}: ${all.filter((r) => r.shift === s).length}`).join(', ')}).`);
   });
 
   /* 6. Ирц ----------------------------------------------------------------- */
 
+  /*
+    Ирц бүртгэх: ирсэн хүүхдийн нэр дээр дарахад тэр даруй хадгалагдана (хадгалах товчгүй).
+    «Хичээл дуусгах» нь ирц бүртгэгдээгүй, төлбөр төлсөн хүүхдийг «Тасалсан» болгоно.
+    Төлбөр төлөөгүй, ирээгүй хүүхдийн ирцийг бүртгэхгүй (хичээлдээ эхлээгүй гэж үзнэ).
+  */
   const FIRST_CLASS = '2026-11-28'; // Анхны хичээл (Бямба)
-  const ATT_STATUSES = ['Ирсэн', 'Тасалсан', 'Чөлөөтэй'];
   const WEEKDAYS = ['Ням', 'Даваа', 'Мягмар', 'Лхагва', 'Пүрэв', 'Баасан', 'Бямба'];
   const weekday = (iso) => new Date(iso + 'T00:00:00Z').getUTCDay();
   const isClassDay = (iso) => [0, 6].includes(weekday(iso));
@@ -1225,6 +1265,7 @@
     return date.toISOString().slice(0, 10);
   };
   const shortDate = (iso) => `${Number(iso.slice(5, 7))}/${Number(iso.slice(8, 10))}`;
+  const normal = (t) => (t || '').toLowerCase().replace(/[^а-яөүёa-z0-9]/g, '');
 
   // Өнөөдөр Бямба/Ням бол өнөөдөр, үгүй бол дараагийн Бямба (анхны хичээлээс өмнө биш).
   function defaultClassDate() {
@@ -1233,14 +1274,14 @@
     return iso < FIRST_CLASS ? FIRST_CLASS : iso;
   }
 
-  // Товчоор харуулах өдрүүд: сүүлийн 4 амралтын өдөр (8 хичээлийн өдөр) + дараагийн.
+  // Товчоор харуулах өдрүүд: сүүлийн 8 хичээлийн өдөр (дараагийн амралтын өдрийг оруулаад).
   function classDays() {
     const last = defaultClassDate();
     const days = [];
     for (let iso = FIRST_CLASS; iso <= last; iso = addDays(iso, 1)) {
       if (isClassDay(iso)) days.push(iso);
     }
-    if (weekday(last) === 6) days.push(addDays(last, 1)); // Бямба бол Нямыг нь ч харуулна
+    if (weekday(last) === 6) days.push(addDays(last, 1));
     return days.slice(-8);
   }
 
@@ -1249,14 +1290,15 @@
   let attShift = SHIFT_ORDER[0];
   let attMode = 'mark'; // 'mark' — ирц бүртгэх, 'journal' — ирцийн журнал
   let journalShift = SHIFT_ORDER[0];
-  let draft = new Map(); // registration_id → төлөв (хадгалаагүй)
-  let draftKey = '';
-  let dirty = false;
+  let draftKey = ''; // Журналаас шилжихэд ашиглана (хадгалаагүй өөрчлөлт байхгүй тул хоосон)
+  const pending = new Set(); // Хадгалж байгаа хүүхдүүд
 
   const sessionFor = (shift, date) => sessions.find((s) => s.shift === shift && s.class_date === date);
   const marksOf = (session) => (session ? attendance.filter((a) => a.session_id === session.id) : []);
+  const markOf = (session, r) =>
+    session ? attendance.find((a) => a.session_id === session.id && a.registration_id === r.id) : null;
 
-  // Жагсаалт: тухайн ээлжийн шинэ/идэвхтэй хүүхэд + энэ хичээлд аль хэдийн ирц бүртгэгдсэн хүүхэд.
+  // Жагсаалт: тухайн ээлжийн шинэ/идэвхтэй хүүхэд + энэ хичээлд ирц бүртгэгдсэн бусад хүүхэд.
   function rollFor(shift, date) {
     const marked = new Set(marksOf(sessionFor(shift, date)).map((a) => a.registration_id));
     return registrations
@@ -1264,32 +1306,12 @@
       .sort(byName);
   }
 
-  function resetDraft() {
-    const key = `${attShift}|${attDate.value}`;
-    if (key === draftKey) return;
-    draftKey = key;
-    dirty = false;
-    draft = new Map();
-    const session = sessionFor(attShift, attDate.value);
-    marksOf(session).forEach((a) => draft.set(a.registration_id, a.status));
-    rollFor(attShift, attDate.value).forEach((r) => {
-      if (!draft.has(r.id)) draft.set(r.id, 'Ирсэн');
-    });
-  }
-
-  // Хадгалаагүй өөрчлөлттэй бол өөр өдөр, ээлж рүү шилжихээс өмнө асууна.
-  async function leaveDraft() {
-    if (!dirty) return true;
-    return confirmDelete('Энэ ээлжийн ирц хадгалагдаагүй байна. Хадгалахгүйгээр өөр өдөр, ээлж рүү шилжвэл өөрчлөлт алга болно.', {
-      title: 'Ирц хадгалаагүй байна',
-      yes: 'Хадгалахгүй шилжих',
-    });
-  }
+  // Ирцийн журнал руу шилжихэд хадгалаагүй өөрчлөлт байхгүй (дармагц хадгалагддаг).
+  const leaveDraft = async () => true;
 
   function renderDays() {
-    const days = classDays();
     $('att-days').replaceChildren(
-      ...days.map((iso) => {
+      ...classDays().map((iso) => {
         const done = SHIFT_ORDER.filter((shift) => sessionFor(shift, iso)).length;
         const button = document.createElement('button');
         button.type = 'button';
@@ -1298,11 +1320,15 @@
         button.setAttribute('aria-selected', String(iso === attDate.value));
         button.append(
           createElement('strong', `${shortDate(iso)} ${WEEKDAYS[weekday(iso)]}`),
-          createElement('span', done === 3 ? 'Бүгд ✓' : done > 0 ? `${done}/3 ээлж` : iso === today() ? 'Өнөөдөр' : '', done === 3 ? 'is-done' : ''),
+          createElement(
+            'span',
+            done === 3 ? 'Бүгд ✓' : done > 0 ? `${done}/3 ээлж` : iso === today() ? 'Өнөөдөр' : '',
+            done === 3 ? 'is-done' : '',
+          ),
         );
-        button.addEventListener('click', async () => {
-          if (iso === attDate.value || !(await leaveDraft())) return;
+        button.addEventListener('click', () => {
           attDate.value = iso;
+          $('att-search').value = '';
           renderAttendance();
         });
         return button;
@@ -1310,7 +1336,7 @@
     );
   }
 
-  // Хүүхдийн одоогийн төлбөрийн багц доторх ирц (цэгээр харуулна).
+  // 8 хичээлийн явц (цэг)
   const STATUS_CLASS = { Ирсэн: 'is-present', Тасалсан: 'is-absent', Чөлөөтэй: 'is-excused' };
   const sessionDate = (id) => (sessions.find((x) => x.id === id) || {}).class_date || '';
 
@@ -1323,12 +1349,12 @@
     const used = marks.length;
     let start = 0;
     for (const size of sizes) {
-      if (used < start + size) return { size, marks: marks.slice(start, start + size), owed: 0, paid: true };
+      if (used < start + size) return { size, marks: marks.slice(start, start + size), owed: 0 };
       start += size;
     }
-    if (sizes.length === 0) return { size: LESSONS_PER_PAYMENT, marks: [], owed: used, paid: false };
+    if (sizes.length === 0) return { size: LESSONS_PER_PAYMENT, marks: [], owed: used };
     const last = sizes[sizes.length - 1];
-    return { size: last, marks: marks.slice(start - last, start), owed: used - start, paid: true };
+    return { size: last, marks: marks.slice(start - last, start), owed: used - start };
   }
 
   function lessonDots(r) {
@@ -1344,49 +1370,97 @@
     return box;
   }
 
-  function renderCounts() {
-    const roll = rollFor(attShift, attDate.value);
-    const count = (status) => roll.filter((r) => draft.get(r.id) === status).length;
-    $('att-counts').replaceChildren(
-      ...ATT_STATUSES.map((status) => {
-        const chip = createElement('span', null, 'att-count');
-        chip.dataset.status = status;
-        chip.append(createElement('strong', String(count(status))), ` ${status}`);
-        return chip;
-      }),
-      createElement('span', `Нийт ${roll.length} хүүхэд`, 'att-total'),
-    );
-  }
-
-  function renderSaveState() {
-    const session = sessionFor(attShift, attDate.value);
-    const state = $('att-state');
-    if (dirty) {
-      state.textContent = 'Хадгалаагүй өөрчлөлт байна';
-      state.className = 'att-state is-dirty';
-    } else if (session) {
-      state.textContent = 'Ирц хадгалагдсан ✓';
-      state.className = 'att-state is-done';
-    } else {
-      state.textContent = 'Ирц хадгалагдаагүй';
-      state.className = 'att-state';
-    }
-    $('att-save').textContent = session && !dirty ? 'Дахин хадгалах' : 'Ирц хадгалах';
-    $('att-delete').hidden = !session;
-  }
-
-  function leftLabel(r, session) {
-    // Энэ хичээлийг хадгалаагүй бол хадгалсны дараах үлдэгдлийг харуулна.
-    const after = leftOf(r) - (session && marksOf(session).some((a) => a.registration_id === r.id) ? 0 : 1);
+  function leftText(r) {
     if (boughtOf(r) === 0) return ['Төлбөр төлөөгүй', 'is-unpaid'];
-    if (after < 0) return [`Төлөх (${-after} хичээл өртэй)`, 'is-unpaid'];
-    if (after === 0) return ['Энэ хичээлээр дуусна', 'is-low'];
-    return [`${after} хичээл үлдэнэ`, after <= LOW_LESSONS ? 'is-low' : 'is-paid'];
+    const left = leftOf(r);
+    if (left < 0) return [`${-left} хичээл өртэй`, 'is-unpaid'];
+    if (left === 0) return ['8 хичээл дууссан', 'is-unpaid'];
+    return [`${left} хичээл үлдсэн`, left <= LOW_LESSONS ? 'is-low' : 'is-paid'];
   }
 
-  function renderAttendance() {
+  function setState(text, kind = '') {
+    $('att-state').textContent = text;
+    $('att-state').className = `att-state ${kind}`;
+  }
+
+  async function ensureSession(shift, date) {
+    let session = sessionFor(shift, date);
+    if (session) return session;
+    const rows = await Backend.upsert('class_sessions', [{ shift, class_date: date }], 'shift,class_date');
+    session = rows[0];
+    sessions.push(session);
+    return session;
+  }
+
+  // Нэг хүүхдийн ирцийг тэр даруй хадгална. status = null бол бичлэгийг устгана.
+  async function saveMark(r, status) {
+    if (pending.has(r.id)) return;
+    pending.add(r.id);
+    const date = attDate.value;
+    const shift = attShift;
+    setState('Хадгалж байна…');
+    try {
+      const session = await ensureSession(shift, date);
+      if (status) {
+        const rows = await Backend.upsert(
+          'attendance',
+          [{ session_id: session.id, registration_id: r.id, status }],
+          'session_id,registration_id',
+        );
+        attendance = attendance
+          .filter((a) => !(a.session_id === session.id && a.registration_id === r.id))
+          .concat(rows.map((a) => ({ session_id: a.session_id, registration_id: a.registration_id, status: a.status })));
+      } else {
+        await Backend.removeWhere('attendance', `session_id=eq.${session.id}&registration_id=eq.${r.id}`);
+        attendance = attendance.filter((a) => !(a.session_id === session.id && a.registration_id === r.id));
+      }
+      const time = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Ulaanbaatar', hour: '2-digit', minute: '2-digit' }).format(new Date());
+      setState(`${r.child_name}: ${status || 'тэмдэглэгээ арилсан'}. Хадгалагдсан ✓ ${time}`, 'is-done');
+    } catch (error) {
+      setState('Хадгалж чадсангүй. Дахин дарна уу.', 'is-dirty');
+      showError(error);
+    } finally {
+      pending.delete(r.id);
+      renderAttendance({ keepScroll: true });
+      renderRegistrations();
+    }
+  }
+
+  function tileFor(r, session, { other = false } = {}) {
+    const mark = markOf(session, r);
+    const status = mark ? mark.status : '';
+    const tile = createElement('div', null, 'att-tile');
+    tile.dataset.status = status;
+
+    const main = createElement('button', null, 'att-tile-main');
+    main.type = 'button';
+    main.setAttribute('aria-pressed', String(status === 'Ирсэн'));
+    const check = createElement('span', status === 'Ирсэн' ? '✓' : status === 'Тасалсан' ? '✗' : status === 'Чөлөөтэй' ? 'Ч' : '', 'att-check');
+    const text = createElement('span', null, 'att-tile-text');
+    text.append(createElement('strong', r.child_name));
+    const [label, kind] = leftText(r);
+    const meta = createElement('span', null, 'att-tile-meta');
+    meta.append(lessonDots(r), createElement('span', label, `pay-pill ${kind}`));
+    text.append(meta);
+    if (other || r.shift !== attShift) text.append(createElement('small', `${r.shift} ээлжийн хүүхэд`, 'att-other-shift'));
+    main.append(check, text);
+    main.addEventListener('click', () => saveMark(r, status === 'Ирсэн' ? null : 'Ирсэн'));
+
+    const leave = createElement('button', 'Чөлөө', 'att-leave');
+    leave.type = 'button';
+    leave.setAttribute('aria-pressed', String(status === 'Чөлөөтэй'));
+    leave.setAttribute('aria-label', `${r.child_name}: чөлөөтэй`);
+    leave.addEventListener('click', () => saveMark(r, status === 'Чөлөөтэй' ? null : 'Чөлөөтэй'));
+
+    if (pending.has(r.id)) tile.classList.add('is-saving');
+    tile.append(main, leave);
+    return tile;
+  }
+
+  function renderAttendance({ keepScroll = false } = {}) {
     if (attMode === 'journal') return renderJournal();
     if (!attDate.value) return;
+    const scroll = window.scrollY;
     const date = attDate.value;
     renderDays();
     $('att-day').textContent =
@@ -1396,124 +1470,117 @@
     $('att-shift-tabs').replaceChildren(
       ...SHIFT_ORDER.map((shift) => {
         const session = sessionFor(shift, date);
+        const marks = marksOf(session);
+        const present = marks.filter((a) => a.status === 'Ирсэн').length;
         return shiftButton(
           shift,
           shift === attShift,
           [
             [`${rollFor(shift, date).length} хүүхэд`],
-            session ? ['Ирц хадгалагдсан ✓', 'is-done'] : ['Ирц бүртгээгүй', 'is-due'],
+            session ? [`Ирсэн ${present}`, 'is-done'] : ['Ирц бүртгээгүй', 'is-due'],
           ],
-          async () => {
-            if (shift === attShift || !(await leaveDraft())) return;
+          () => {
             attShift = shift;
+            $('att-search').value = '';
             renderAttendance();
           },
         );
       }),
     );
 
-    resetDraft();
-    renderCounts();
-    renderSaveState();
     const session = sessionFor(attShift, date);
     const roll = rollFor(attShift, date);
+    const query = normal($('att-search').value);
+    const match = (r) => !query || normal(r.child_name).includes(query) || (r.parent_phone || '').includes(query);
 
-    if (roll.length === 0) {
-      const tr = document.createElement('tr');
-      const td = createElement('td', 'Энэ ээлжид хүүхэд алга.', 'reg-empty');
-      td.colSpan = 3;
-      tr.append(td);
-      return $('att-rows').replaceChildren(tr);
-    }
-
-    $('att-rows').replaceChildren(
-      ...roll.map((r, i) => {
-        const tr = document.createElement('tr');
-        tr.dataset.status = draft.get(r.id);
-        const name = createElement('td', null, 'att-name');
-        name.append(createElement('strong', r.child_name));
-        if (r.shift !== attShift) name.append(createElement('small', `Одоо ${r.shift} ээлжид`));
-        const [text, kind] = leftLabel(r, session);
-        const progress = createElement('span', null, 'att-progress');
-        progress.append(lessonDots(r), createElement('span', text, `pay-pill ${kind}`));
-        name.append(progress);
-
-        const choice = createElement('td', null, 'att-choice');
-        const group = document.createElement('div');
-        group.className = 'att-segment';
-        group.setAttribute('role', 'radiogroup');
-        group.setAttribute('aria-label', `${r.child_name}: ирц`);
-        ATT_STATUSES.forEach((status) => {
-          const button = createElement('button', status, 'att-option');
-          button.type = 'button';
-          button.dataset.status = status;
-          button.setAttribute('role', 'radio');
-          button.setAttribute('aria-checked', String(draft.get(r.id) === status));
-          button.addEventListener('click', () => {
-            if (draft.get(r.id) === status) return;
-            draft.set(r.id, status);
-            dirty = true;
-            tr.dataset.status = status;
-            group.querySelectorAll('button').forEach((b) =>
-              b.setAttribute('aria-checked', String(b.dataset.status === status)),
-            );
-            renderCounts();
-            renderSaveState();
-          });
-          group.append(button);
-        });
-        choice.append(group);
-
-
-        tr.append(createElement('td', String(i + 1), 'reg-num'), name, choice);
-        return tr;
+    // Тоолуур
+    const marks = marksOf(session);
+    const count = (s) => marks.filter((a) => a.status === s).length;
+    const unmarked = roll.filter((r) => !markOf(session, r)).length;
+    $('att-counts').replaceChildren(
+      ...[
+        ['Ирсэн', count('Ирсэн')],
+        ['Чөлөөтэй', count('Чөлөөтэй')],
+        ['Тасалсан', count('Тасалсан')],
+      ].map(([label, n]) => {
+        const chip = createElement('span', null, 'att-count');
+        chip.dataset.status = label;
+        chip.append(createElement('strong', String(n)), ` ${label}`);
+        return chip;
       }),
+      createElement('span', `Тэмдэглээгүй ${unmarked}, нийт ${roll.length}`, 'att-total'),
     );
+
+    const visible = roll.filter(match);
+    $('att-grid').replaceChildren(
+      ...(visible.length
+        ? visible.map((r) => tileFor(r, session))
+        : [createElement('p', query ? 'Энэ ээлжээс олдсонгүй.' : 'Энэ ээлжид хүүхэд алга.', 'reg-empty')]),
+    );
+
+    // Хайлтаар бусад ээлжийн хүүхдийг санал болгоно.
+    const inRoll = new Set(roll.map((r) => r.id));
+    const others = query.length >= 2
+      ? registrations.filter((r) => !inRoll.has(r.id) && r.status !== 'Гарсан' && match(r)).sort(byName).slice(0, 12)
+      : [];
+    $('att-others').hidden = others.length === 0;
+    $('att-others-grid').replaceChildren(...others.map((r) => tileFor(r, session, { other: true })));
+
+    // Төлөв, товчнууд
+    if (!pending.size && !$('att-state').textContent) {
+      setState(session ? 'Энэ хичээлийн ирц хадгалагдсан ✓' : 'Ирсэн хүүхдийн нэр дээр дарж эхэлнэ үү.', session ? 'is-done' : '');
+    }
+    $('att-finish').disabled = roll.length === 0;
+    $('att-delete').hidden = !session;
+    if (keepScroll) window.scrollTo(0, scroll);
   }
 
-  attDate.addEventListener('change', async () => {
-    const wanted = attDate.value;
-    attDate.value = draftKey.split('|')[1] || wanted;
-    if (!(await leaveDraft())) return;
-    attDate.value = wanted;
+  $('att-search').addEventListener('input', () => renderAttendance({ keepScroll: true }));
+  attDate.addEventListener('change', () => {
+    $('att-search').value = '';
+    setState('');
     renderAttendance();
   });
 
-  $('att-all-present').addEventListener('click', () => {
-    rollFor(attShift, attDate.value).forEach((r) => {
-      if (draft.get(r.id) !== 'Ирсэн') dirty = true;
-      draft.set(r.id, 'Ирсэн');
-    });
-    renderAttendance();
-  });
-
-  $('att-save').addEventListener('click', async () => {
+  // Хичээл дуусгах: ирц бүртгэгдээгүй, төлбөр төлсөн хүүхдийг «Тасалсан» болгоно.
+  $('att-finish').addEventListener('click', async () => {
     const date = attDate.value;
-    if (!date) return showError(new Error('Хичээлийн өдрийг сонгоно уу.'));
+    const session = sessionFor(attShift, date);
     const roll = rollFor(attShift, date);
-    if (roll.length === 0) return showError(new Error('Энэ ээлжид хүүхэд алга.'));
+    const unmarked = roll.filter((r) => !markOf(session, r));
+    const absentPaid = unmarked.filter((r) => boughtOf(r) > 0);
+    const skipped = unmarked.length - absentPaid.length;
+    const present = marksOf(session).filter((a) => a.status === 'Ирсэн').length;
 
-    await withBusy($('att-save'), async () => {
+    if (absentPaid.length === 0) {
+      setState(
+        `Ирсэн ${present}. Тэмдэглээгүй, төлбөр төлсөн хүүхэд алга` + (skipped ? ` (төлбөр төлөөгүй ${skipped} хүүхдийн ирцийг бүртгэхгүй).` : '.'),
+        'is-done',
+      );
+      return;
+    }
+    const ok = await confirmDelete(
+      `${absentPaid.length} хүүхэд ирц бүртгэгдээгүй, төлбөр төлсөн байна: ${absentPaid.map((r) => r.child_name).join(', ')}. ` +
+        `Тэднийг «Тасалсан» болгох уу? 8 хичээлээс нэг хасагдана.` +
+        (skipped ? ` Төлбөр төлөөгүй ${skipped} хүүхдийн ирцийг бүртгэхгүй.` : ''),
+      { title: 'Хичээл дуусгах', yes: `${absentPaid.length} хүүхдийг «Тасалсан» болгох` },
+    );
+    if (!ok) return;
+
+    await withBusy($('att-finish'), async () => {
       try {
-        let session = sessionFor(attShift, date);
-        if (!session) {
-          const rows = await Backend.upsert('class_sessions', [{ shift: attShift, class_date: date }], 'shift,class_date');
-          session = rows[0];
-          sessions.push(session);
-        }
-        const rows = roll.map((r) => ({
-          session_id: session.id,
-          registration_id: r.id,
-          status: draft.get(r.id) || 'Ирсэн',
-        }));
-        const saved = await Backend.upsert('attendance', rows, 'session_id,registration_id');
-        attendance = attendance.filter((a) => a.session_id !== session.id).concat(saved);
-        draftKey = '';
-        const finished = roll.filter((r) => boughtOf(r) > 0 && leftOf(r) <= 0).length;
-        showStatus(
-          `${dateLabel(date)}, ${attShift} ээлжийн ирц хадгалагдлаа.` +
-            (finished ? ` ${finished} хүүхдийн төлсөн хичээл дууссан, «Бүртгэл, төлбөр» хэсгээс харна уу.` : ''),
+        const s = await ensureSession(attShift, date);
+        const rows = await Backend.upsert(
+          'attendance',
+          absentPaid.map((r) => ({ session_id: s.id, registration_id: r.id, status: 'Тасалсан' })),
+          'session_id,registration_id',
         );
+        const ids = new Set(absentPaid.map((r) => r.id));
+        attendance = attendance
+          .filter((a) => !(a.session_id === s.id && ids.has(a.registration_id)))
+          .concat(rows.map((a) => ({ session_id: a.session_id, registration_id: a.registration_id, status: a.status })));
+        setState(`Хичээл дууслаа: ирсэн ${present}, тасалсан ${absentPaid.length}.`, 'is-done');
+        showStatus(`${dateLabel(date)}, ${attShift} ээлжийн ирц бүрэн бүртгэгдлээ.`);
         renderAttendance();
         renderRegistrations();
       } catch (error) {
@@ -1533,15 +1600,13 @@
       await Backend.remove('class_sessions', session.id);
       sessions = sessions.filter((s) => s.id !== session.id);
       attendance = attendance.filter((a) => a.session_id !== session.id);
-      draftKey = '';
-      showStatus('Энэ хичээлийн ирцийг устгалаа.');
+      setState('Энэ хичээлийн ирцийг устгалаа.');
       renderAttendance();
       renderRegistrations();
     } catch (error) {
       showError(error);
     }
   });
-
 
   /* Ирцийн журнал (ээлж бүрийн бүх хичээл) */
 
