@@ -1342,46 +1342,100 @@
     );
   }
 
-  // 8 хичээлийн явц (цэг)
+  // 8 хичээлийн явц ---------------------------------------------------------
   const STATUS_CLASS = { Ирсэн: 'is-present', Тасалсан: 'is-absent', Чөлөөтэй: 'is-excused' };
+  const STATUS_ICON = { Ирсэн: '✓', Тасалсан: '✗', Чөлөөтэй: 'Ч' };
   const sessionDate = (id) => (sessions.find((x) => x.id === id) || {}).class_date || '';
 
-  function lessonTrack(r) {
+  // Хүүхдийн бүх ирц огноогоор, төлбөр бүрийн багцад хуваасан.
+  function lessonHistory(r) {
     const marks = attendance
       .filter((a) => a.registration_id === r.id)
-      .sort((x, y) => sessionDate(x.session_id).localeCompare(sessionDate(y.session_id)))
-      .map((a) => a.status);
-    const sizes = paymentsOf(r).map((p) => p.lessons || LESSONS_PER_PAYMENT);
-    const used = marks.length;
-    let start = 0;
-    for (const size of sizes) {
-      if (used < start + size) return { size, marks: marks.slice(start, start + size), owed: 0 };
-      start += size;
+      .map((a) => ({ date: sessionDate(a.session_id), status: a.status }))
+      .sort((x, y) => x.date.localeCompare(y.date));
+    const packs = paymentsOf(r).map((p) => ({ payment: p, size: p.lessons || LESSONS_PER_PAYMENT, marks: [] }));
+    let i = 0;
+    for (const pack of packs) {
+      pack.marks = marks.slice(i, i + pack.size);
+      i += pack.size;
     }
-    if (sizes.length === 0) return { size: LESSONS_PER_PAYMENT, marks: [], owed: used };
-    const last = sizes[sizes.length - 1];
-    return { size: last, marks: marks.slice(start - last, start), owed: used - start };
+    return { marks, packs, owed: marks.slice(i) };
   }
 
-  function lessonDots(r) {
-    const track = lessonTrack(r);
+  // Одоогийн багц: хэд дэх хичээл, хэд үлдсэн, ойролцоогоор хэзээ дуусах.
+  function lessonPack(r, fromDate = today()) {
+    const { marks, packs, owed } = lessonHistory(r);
+    const bought = packs.reduce((s, p) => s + p.size, 0);
+    const left = bought - marks.length;
+    const current = packs.find((p) => p.marks.length < p.size) || packs[packs.length - 1] || null;
+    const lastPaid = paymentsOf(r).at(-1);
+    // Үлдсэн хичээлүүд ямар өдрүүдэд таарахыг (Бямба, Ням) тооцно.
+    let lastLesson = '';
+    let nextPay = '';
+    if (left > 0) {
+      const latest = marks.length ? marks[marks.length - 1].date : '';
+      let iso = latest && latest >= fromDate ? addDays(latest, 1) : fromDate;
+      let n = 0;
+      for (; n < left; iso = addDays(iso, 1)) {
+        if (isClassDay(iso)) {
+          n += 1;
+          lastLesson = iso;
+        }
+      }
+      nextPay = addDays(lastLesson, 1);
+      while (!isClassDay(nextPay)) nextPay = addDays(nextPay, 1);
+    }
+    return {
+      bought,
+      used: marks.length,
+      left,
+      size: current ? current.size : LESSONS_PER_PAYMENT,
+      packMarks: current ? current.marks : [],
+      owed: owed.length,
+      paidOn: lastPaid ? lastPaid.paid_on || lastPaid.period_start || '' : '',
+      lastLesson,
+      nextPay,
+    };
+  }
+
+  function lessonDots(info) {
     const box = createElement('span', null, 'lesson-dots');
     box.setAttribute('aria-hidden', 'true');
-    for (let i = 0; i < track.size; i += 1) {
+    for (let i = 0; i < info.size; i += 1) {
       const dot = createElement('i', null, 'dot');
-      if (track.marks[i]) dot.classList.add(STATUS_CLASS[track.marks[i]]);
+      if (info.packMarks[i]) dot.classList.add(STATUS_CLASS[info.packMarks[i].status]);
       box.append(dot);
     }
-    if (track.owed > 0) box.append(createElement('b', `+${track.owed}`, 'dot-owed'));
+    if (info.owed > 0) box.append(createElement('b', `+${info.owed}`, 'dot-owed'));
     return box;
   }
 
+  // Төлбөрийн мөр: [текст, төрөл]
+  function payLine(info) {
+    if (info.bought === 0) {
+      return ['Төлбөр төлөөгүй', 'is-unpaid'];
+    }
+    if (info.left < 0) return [`${-info.left} хичээл өртэй. Дараагийн төлбөр одоо`, 'is-unpaid'];
+    if (info.left === 0) return ['8 хичээл дууссан. Дараагийн төлбөр одоо', 'is-unpaid'];
+    const when = `Дараагийн төлбөр ≈ ${shortDate(info.nextPay)}`;
+    if (info.left <= LOW_LESSONS) return [`${when} (${info.left} хичээл үлдсэн)`, 'is-low'];
+    return [`Төлсөн ${info.paidOn ? shortDate(info.paidOn) : ''}. ${when}`, 'is-paid'];
+  }
+
+  // Хуучин нэрээр (бүртгэлийн хүснэгт гэх мэт) ашиглагддаг.
   function leftText(r) {
-    if (boughtOf(r) === 0) return ['Төлбөр төлөөгүй', 'is-unpaid'];
-    const left = leftOf(r);
-    if (left < 0) return [`${-left} хичээл өртэй`, 'is-unpaid'];
-    if (left === 0) return ['8 хичээл дууссан', 'is-unpaid'];
-    return [`${left} хичээл үлдсэн`, left <= LOW_LESSONS ? 'is-low' : 'is-paid'];
+    const info = lessonPack(r);
+    if (info.bought === 0) return ['Төлбөр төлөөгүй', 'is-unpaid'];
+    if (info.left < 0) return [`${-info.left} хичээл өртэй`, 'is-unpaid'];
+    if (info.left === 0) return ['8 хичээл дууссан', 'is-unpaid'];
+    return [`${info.left} хичээл үлдсэн`, info.left <= LOW_LESSONS ? 'is-low' : 'is-paid'];
+  }
+
+  // Хичээлийн дугаар: «3 дахь хичээл» гэх мэт (одоогийн багц дотор).
+  function lessonNumberText(info) {
+    if (info.bought === 0) return info.owed > 0 ? `${info.owed} хичээл бүртгэгдсэн` : 'Хичээл эхлээгүй';
+    if (info.left < 0) return `${info.size}/${info.size} дууссан, +${-info.left}`;
+    return `${info.packMarks.length}/${info.size} хичээл`;
   }
 
   function setState(text, kind = '') {
@@ -1421,7 +1475,13 @@
         attendance = attendance.filter((a) => !(a.session_id === session.id && a.registration_id === r.id));
       }
       const time = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Ulaanbaatar', hour: '2-digit', minute: '2-digit' }).format(new Date());
-      setState(`${r.child_name}: ${status || 'тэмдэглэгээ арилсан'}. Хадгалагдсан ✓ ${time}`, 'is-done');
+      const info = lessonPack(r);
+      const after = info.bought === 0
+        ? 'Төлбөр төлөөгүй.'
+        : info.left >= 0
+          ? `${info.packMarks.length}/${info.size} хичээл, ${info.left} үлдсэн.`
+          : `${-info.left} хичээл өртэй.`;
+      setState(`${r.child_name}: ${status || 'тэмдэглэгээ арилсан'}. ${after} Хадгалагдсан ✓ ${time}`, 'is-done');
     } catch (error) {
       setState('Хадгалж чадсангүй. Дахин дарна уу.', 'is-dirty');
       showError(error);
@@ -1435,20 +1495,24 @@
   function tileFor(r, session, { other = false } = {}) {
     const mark = markOf(session, r);
     const status = mark ? mark.status : '';
+    const info = lessonPack(r, attDate.value);
     const tile = createElement('div', null, 'att-tile');
     tile.dataset.status = status;
 
     const main = createElement('button', null, 'att-tile-main');
     main.type = 'button';
     main.setAttribute('aria-pressed', String(status === 'Ирсэн'));
-    const check = createElement('span', status === 'Ирсэн' ? '✓' : status === 'Тасалсан' ? '✗' : status === 'Чөлөөтэй' ? 'Ч' : '', 'att-check');
+    const check = createElement('span', STATUS_ICON[status] || '', 'att-check');
     const text = createElement('span', null, 'att-tile-text');
     text.append(createElement('strong', r.child_name));
-    const [label, kind] = leftText(r);
-    const meta = createElement('span', null, 'att-tile-meta');
-    meta.append(lessonDots(r), createElement('span', label, `pay-pill ${kind}`));
-    text.append(meta);
     if (other || r.shift !== attShift) text.append(createElement('small', `${r.shift} ээлжийн хүүхэд`, 'att-other-shift'));
+
+    const count = createElement('span', null, 'att-count-line');
+    count.append(createElement('b', lessonNumberText(info)));
+    if (info.bought > 0) count.append(lessonDots(info));
+    if (info.bought > 0 && info.left > 0) count.append(createElement('span', `${info.left} үлдсэн`, 'att-left'));
+    const [payText, payKind] = payLine(info);
+    text.append(count, createElement('span', payText, `pay-pill ${payKind}`));
     main.append(check, text);
     main.addEventListener('click', () => saveMark(r, status === 'Ирсэн' ? null : 'Ирсэн'));
 
@@ -1458,10 +1522,115 @@
     leave.setAttribute('aria-label', `${r.child_name}: чөлөөтэй`);
     leave.addEventListener('click', () => saveMark(r, status === 'Чөлөөтэй' ? null : 'Чөлөөтэй'));
 
+    // Доод мөр: энэ багцад ирсэн өдрүүд + дэлгэрэнгүй
+    const foot = createElement('div', null, 'att-tile-foot');
+    const days = createElement('span', null, 'att-dates');
+    const shown = info.bought === 0 ? lessonHistory(r).owed : info.packMarks;
+    if (shown.length) {
+      shown.forEach((m) => {
+        const chip = createElement('span', `${shortDate(m.date)} ${STATUS_ICON[m.status]}`, `att-date-chip ${STATUS_CLASS[m.status]}`);
+        chip.title = `${dateLabel(m.date)}: ${m.status}`;
+        days.append(chip);
+      });
+    } else {
+      days.append(createElement('span', 'Ирц бүртгэгдээгүй', 'att-dates-empty'));
+    }
+    const more = createElement('button', 'Дэлгэрэнгүй', 'att-more');
+    more.type = 'button';
+    more.setAttribute('aria-label', `${r.child_name}: ирц, төлбөрийн дэлгэрэнгүй`);
+    more.addEventListener('click', () => openLessonDetail(r));
+    foot.append(days, more);
+
     if (pending.has(r.id)) tile.classList.add('is-saving');
-    tile.append(main, leave);
+    const top = createElement('div', null, 'att-tile-top');
+    top.append(main, leave);
+    tile.append(top, foot);
     return tile;
   }
+
+  /* Хүүхдийн ирц, төлбөрийн дэлгэрэнгүй цонх */
+
+  const detailDialog = $('att-detail');
+  let detailTarget = null;
+
+  function openLessonDetail(r) {
+    detailTarget = r;
+    const info = lessonPack(r);
+    const { packs, owed } = lessonHistory(r);
+    $('att-detail-title').textContent = r.child_name;
+    $('att-detail-who').textContent =
+      `${r.school_grade || ''} анги, ${r.shift} ээлж. Эцэг эх: ${r.parent_name || ''} ${r.parent_phone || ''}`.trim();
+
+    const [payText, payKind] = payLine(info);
+    const summary = createElement('div', null, 'att-detail-summary');
+    summary.append(
+      createElement('span', `Төлсөн: ${packs.length} удаа, ${info.bought} хичээл`),
+      createElement('span', `Хичээллэсэн: ${info.used}`),
+      createElement('span', info.left >= 0 ? `Үлдсэн: ${info.left}` : `Өртэй: ${-info.left}`),
+      createElement('span', payText, `pay-pill ${payKind}`),
+    );
+    if (info.left > 0 && info.lastLesson) {
+      summary.append(
+        createElement(
+          'small',
+          `Үлдсэн хичээл ≈ ${dateLabel(info.lastLesson)} хүртэл хүрнэ. Дараагийн төлбөрийг ${dateLabel(info.nextPay)}-ны хичээлээс өмнө авна (баярын өдөр тооцоогүй).`,
+          'admin-hint',
+        ),
+      );
+    }
+
+    const body = createElement('div', null, 'att-detail-packs');
+    if (packs.length === 0) {
+      body.append(createElement('p', 'Төлбөр бүртгэгдээгүй байна.', 'admin-hint'));
+    }
+    packs.forEach((pack, index) => {
+      const p = pack.payment;
+      const box = createElement('section', null, 'att-pack');
+      box.append(
+        createElement(
+          'h4',
+          `${index + 1}-р төлбөр: ${dateLabel(p.paid_on || p.period_start)}, ${money(p.amount)}, ${pack.size} хичээл`,
+        ),
+      );
+      const list = createElement('ol', null, 'att-pack-list');
+      for (let i = 0; i < pack.size; i += 1) {
+        const m = pack.marks[i];
+        const li = createElement('li', null, m ? STATUS_CLASS[m.status] : 'is-left');
+        li.append(
+          createElement('span', `${i + 1}.`, 'num'),
+          createElement('span', m ? `${dateLabel(m.date)}, ${WEEKDAYS[weekday(m.date)]}` : '—', 'when'),
+          createElement('span', m ? `${STATUS_ICON[m.status]} ${m.status}` : 'Үлдсэн', 'what'),
+        );
+        list.append(li);
+      }
+      box.append(list);
+      body.append(box);
+    });
+    if (owed.length) {
+      const box = createElement('section', null, 'att-pack is-owed');
+      box.append(createElement('h4', `Төлбөргүй бүртгэгдсэн ${owed.length} хичээл (дараагийн төлбөрөөс хасагдана)`));
+      const list = createElement('ol', null, 'att-pack-list');
+      owed.forEach((m, i) => {
+        const li = createElement('li', null, STATUS_CLASS[m.status]);
+        li.append(
+          createElement('span', `${i + 1}.`, 'num'),
+          createElement('span', `${dateLabel(m.date)}, ${WEEKDAYS[weekday(m.date)]}`, 'when'),
+          createElement('span', `${STATUS_ICON[m.status]} ${m.status}`, 'what'),
+        );
+        list.append(li);
+      });
+      box.append(list);
+      body.append(box);
+    }
+    $('att-detail-body').replaceChildren(summary, body);
+    detailDialog.showModal();
+  }
+
+  $('att-detail-pay').addEventListener('click', () => {
+    if (!detailTarget) return;
+    detailDialog.close();
+    openPaymentForm(detailTarget);
+  });
 
   function renderAttendance({ keepScroll = false } = {}) {
     if (attMode === 'journal') return renderJournal();

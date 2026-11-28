@@ -245,10 +245,19 @@
           <div id="att-shift-tabs" class="shift-tabs" role="tablist" aria-label="Ээлж"></div>
 
           <h2 class="att-step"><span>3</span> Ирсэн хүүхдийн нэр дээр дарна</h2>
-          <p class="admin-hint att-howto">
-            Нэр дээр дармагц <b>«Ирсэн»</b> болж шууд хадгалагдана. Андуурвал дахин дарна. Чөлөө авсан
-            хүүхдэд «Чөлөө» товчийг дарна. Өөр ээлжийн хүүхэд ирсэн бол нэрээр нь хайгаад дарна.
-          </p>
+          <div class="att-howto">
+            <p>
+              Нэр дээр дармагц <b>«Ирсэн»</b> болж шууд хадгалагдана. Андуурвал дахин дарна. Чөлөө авсан
+              хүүхдэд «Чөлөө» товчийг дарна. Өөр ээлжийн хүүхэд ирсэн бол нэрээр нь хайгаад дарна.
+            </p>
+            <p class="att-legend">
+              Нэг төлбөр = 8 хичээл. Ирсэн, тасалсан, чөлөөтэй аль нь ч бүртгэгдвэл 8-аас 1 хасагдана.
+              <span><i class="dot-inline is-present"></i> ирсэн</span>
+              <span><i class="dot-inline is-absent"></i> тасалсан</span>
+              <span><i class="dot-inline is-excused"></i> чөлөөтэй</span>
+              <span><i class="dot-inline"></i> үлдсэн</span>
+            </p>
+          </div>
 
           <div class="att-tools">
             <input id="att-search" type="search" placeholder="Нэрээр хайх (бүх ээлжээс)" aria-label="Нэрээр хайх" autocomplete="off" />
@@ -606,6 +615,19 @@
           <button class="admin-button" type="button" data-close-dialog>Болих</button>
         </div>
       </form>
+    </dialog>
+
+    <!-- Хүүхдийн ирц, төлбөрийн дэлгэрэнгүй -->
+    <dialog id="att-detail" class="admin-dialog att-detail" aria-labelledby="att-detail-title">
+      <div class="admin-form">
+        <h2 id="att-detail-title" class="as-h3"></h2>
+        <p id="att-detail-who" class="admin-hint"></p>
+        <div id="att-detail-body"></div>
+        <div class="admin-actions">
+          <button id="att-detail-pay" class="button gold" type="button">Төлбөр бүртгэх</button>
+          <button class="admin-button" type="button" data-close-dialog>Хаах</button>
+        </div>
+      </div>
     </dialog>
 
     <!-- Бүртгэл засах -->
